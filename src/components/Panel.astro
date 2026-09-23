@@ -1,0 +1,27 @@
+---
+// Contenedor con esquinas redondeadas. La barra de título es opcional: solo la
+// lleva el panel del hero (donde vive la metáfora de API) y los que necesitan
+// un rótulo, con texto llano.
+interface Props {
+  title?: string;
+  class?: string;
+  bodyClass?: string;
+}
+const { title, class: extra = '', bodyClass = 'p-6 md:p-8' } = Astro.props;
+---
+
+<div class={`overflow-hidden rounded-xl border border-line bg-surface/40 ${extra}`}>
+  {
+    title && (
+      <div class="flex items-center justify-between gap-4 border-b border-line bg-bar px-4 py-2.5">
+        <span class="meta truncate">{title}</span>
+        <span class="meta shrink-0 tabular">
+          <slot name="meta" />
+        </span>
+      </div>
+    )
+  }
+  <div class={bodyClass}>
+    <slot />
+  </div>
+</div>

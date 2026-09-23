@@ -1,0 +1,93 @@
+---
+import { getChannels, profile } from '../data/profile';
+import { langFromUrl, t, ui } from '../i18n/config';
+import LinkRow from './LinkRow.astro';
+import Section from './Section.astro';
+import Panel from './Panel.astro';
+
+const lang = langFromUrl(Astro.url);
+// Las filas no muestran `handle`: el número y el correo no se imprimen en la página.
+// El canal se identifica por su logo y su nombre, y el dato viaja dentro del enlace.
+const channels = getChannels(lang);
+---
+
+<Section
+  id="contacto"
+  title={t(ui.sections.contactTitle, lang)}
+  eyebrow={t(ui.sections.contactEyebrow, lang)}
+  class="pb-10 md:pb-12"
+>
+  <p class="mb-10 max-w-[52ch] leading-relaxed text-muted" data-reveal>
+    {t(ui.sections.contactLead, lang)}
+  </p>
+
+  <div data-reveal>
+    <Panel bodyClass="divide-y divide-line">
+      {
+        channels.map((c) => (
+          <LinkRow
+            href={c.href}
+            label={c.name}
+            icon={c.icon}
+            accent={'primary' in c && c.primary}
+            copy={'copy' in c ? c.copy : undefined}
+            copiedLabel={'copy' in c ? t(ui.sections.emailCopied, lang) : undefined}
+          />
+        ))
+      }
+    </Panel>
+  </div>
+
+  <!-- Firma con guiño al oficio: una línea de estado como la que devuelve un servidor.
+       Todo lo que afirma es verificable (disponibilidad, ciudad, con qué está hecho). -->
+  <footer class="mt-16 overflow-hidden rounded-2xl border border-line bg-footer" data-reveal>
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line px-5 py-3 font-mono text-xs md:px-6">
+      <span class="rounded bg-ok/10 px-1.5 py-0.5 font-semibold text-ok">200</span>
+      <span class="text-ok">OK</span>
+      <span class="text-muted">·</span>
+      <span class="text-text">{t(ui.sections.footerStatus, lang)}</span>
+      <span class="ml-auto flex items-center gap-2 text-muted">
+        <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
+          <span class="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 motion-safe:animate-ping"></span>
+          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-ok"></span>
+        </span>
+        {t(profile.availability, lang)}
+      </span>
+    </div>
+
+    <div class="px-5 py-5 font-mono text-[13px] leading-[1.9] md:px-6">
+      <p><span class="text-muted">"name":</span> <span class="text-text">"{profile.name}"</span>,</p>
+      <p><span class="text-muted">"role":</span> <span class="text-text">"{t(profile.role, lang)}"</span>,</p>
+      <p><span class="text-muted">"location":</span> <span class="text-text">"{t(profile.location, lang)}"</span></p>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-4 md:px-6">
+      <span class="meta">
+        Copyright © {new Date().getFullYear()} {profile.name}. {t(ui.sections.footerRights, lang)}
+      </span>
+      <span class="meta">{t(ui.sections.footerBuilt, lang)}</span>
+    </div>
+  </footer>
+</Section>
+
+<script>
+  /* El correo no se muestra en la página, así que un `mailto:` solo dejaría sin salida a
+     quien no tenga programa de correo configurado. Al pulsar se copia la dirección Y se
+     abre el programa: quien tenga cliente lo usa, quien no, ya tiene el correo pegado. */
+  document.querySelectorAll<HTMLAnchorElement>('a[data-copy]').forEach((link) => {
+    const badge = link.querySelector<HTMLElement>('[data-copied]');
+    let timer: number | undefined;
+
+    link.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(link.dataset.copy ?? '');
+      } catch {
+        return; // Sin permiso o sin API: el mailto sigue su curso, no se avisa de algo que no pasó.
+      }
+      if (!badge) return;
+      badge.classList.replace('hidden', 'flex');
+      clearTimeout(timer);
+      timer = window.setTimeout(() => badge.classList.replace('flex', 'hidden'), 2500);
+    });
+  });
+</script>

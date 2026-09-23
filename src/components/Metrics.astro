@@ -1,0 +1,58 @@
+---
+import Icon from './Icon.astro';
+import { metrics } from '../data/profile';
+import { langFromUrl, t } from '../i18n/config';
+
+const lang = langFromUrl(Astro.url);
+// 200.000 en español, 200,000 en inglés. El script de conteo usa el mismo locale.
+const locale = lang === 'es' ? 'es-CO' : 'en-US';
+const fmt = (n: number) => n.toLocaleString(locale);
+---
+
+<section
+  class="container-site"
+  aria-label={lang === 'es' ? 'Resultados' : 'Results'}
+>
+  <!-- data-reveal-group: las tarjetas entran una tras otra, no todas a la vez. -->
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 md:gap-4" data-reveal-group>
+    {
+      metrics.map((m) => (
+        <div
+          class="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface/50 p-6 transition duration-300 hover:-translate-y-0.5 hover:border-accent-text/40 hover:bg-surface"
+          data-reveal
+        >
+          <p class="meta">{t(m.title, lang)}</p>
+
+          <p class="font-display tabular mt-4 text-4xl leading-none font-semibold tracking-[-0.03em] md:text-[2.75rem]">
+            {'prefix' in m && m.prefix}
+            <span data-count={m.count} data-count-locale={locale}>{fmt(m.count)}</span>
+            {m.suffix}
+            {t(m.unit, lang) && (
+              <span class="ml-1.5 text-lg font-normal text-muted">{t(m.unit, lang)}</span>
+            )}
+          </p>
+
+          {/* Subrayado ámbar que crece al entrar: marca el dato sin añadir otro color. */}
+          <span class="mt-4 block h-px w-10 origin-left bg-accent" data-bar />
+
+          <p class="mt-4 flex-1 text-sm leading-relaxed text-muted">{t(m.label, lang)}</p>
+
+          <ul class="mt-5 flex h-5 items-center gap-2.5 text-muted transition-colors group-hover:text-text">
+            {m.logos.map((name) => (
+              <li title={name}>
+                <Icon name={name} size={20} />
+              </li>
+            ))}
+            {'icon' in m && (
+              <li>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
+                  <path d={m.icon} />
+                </svg>
+              </li>
+            )}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</section>

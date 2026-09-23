@@ -1,0 +1,99 @@
+---
+import '../styles/global.css';
+import { profile } from '../data/profile';
+import { LANGS, langFromUrl, localizedPath, t, ui } from '../i18n/config';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const lang = langFromUrl(Astro.url);
+const {
+  title = `${profile.name} — ${t(profile.role, lang)}`,
+  description = t(profile.tagline, lang),
+} = Astro.props;
+
+const site = Astro.site ?? new URL('https://javiermontano.workers.dev');
+const canonical = new URL(localizedPath(lang), site);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {/* hreflang: le dice a Google que / y /en/ son la misma página en dos idiomas. */}
+    {LANGS.map((l) => <link rel="alternate" hreflang={l} href={new URL(localizedPath(l), site)} />)}
+    <link rel="alternate" hreflang="x-default" href={new URL(localizedPath('es'), site)} />
+    <meta property="og:locale" content={lang === 'es' ? 'es_CO' : 'en_US'} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta name="theme-color" content="#0a1628" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: profile.name,
+        jobTitle: t(profile.role, lang),
+        email: `mailto:${profile.email}`,
+        address: { '@type': 'PostalAddress', addressLocality: 'Bogotá', addressCountry: 'CO' },
+        sameAs: ['https://github.com/Jvrmmora', 'https://linkedin.com/in/jvrmmora'],
+        knowsAbout: ['Node.js', 'TypeScript', 'AWS', 'Azure', 'Docker', 'MongoDB', 'PostgreSQL'],
+      })}
+    />
+
+    <!-- El tema se decide antes de pintar (elección guardada, o la del sistema), así
+         no hay un destello del modo equivocado. Sin JS el sitio queda en oscuro.
+         localStorage puede lanzar (modo privado, datos bloqueados): todo va en try/catch. -->
+    <script is:inline>
+      (function () {
+        var theme = 'dark';
+        var saved = null;
+        try {
+          saved = localStorage.getItem('theme');
+        } catch (e) {}
+        // La preferencia del sistema no depende del almacenamiento: si este falla, se respeta igual.
+        if (saved === 'light' || saved === 'dark') theme = saved;
+        else if (window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
+        document.documentElement.dataset.theme = theme;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'light' ? '#f4f6fa' : '#0a1628');
+      })();
+    </script>
+
+    <!-- Marca el documento antes de pintar, para que el CSS oculte lo animable
+         solo cuando JS está vivo y va a revelarlo.
+         El temporizador es el seguro: si GSAP no carga (red lenta, error, bloqueador),
+         a los 2s se retira la clase y TODO el contenido aparece. Sin esto, un fallo
+         del script dejaría la página en blanco bajo el hero. -->
+    <script is:inline>
+      document.documentElement.classList.add('js-motion');
+      setTimeout(function () {
+        if (!document.documentElement.dataset.motionReady) {
+          document.documentElement.classList.remove('js-motion');
+        }
+      }, 2000);
+    </script>
+  </head>
+  <body>
+    <a
+      href="#contenido"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-accent focus:px-4 focus:py-2 focus:font-medium focus:text-on-accent"
+    >
+      {t(ui.a11y.skip, lang)}
+    </a>
+    <slot />
+  </body>
+</html>

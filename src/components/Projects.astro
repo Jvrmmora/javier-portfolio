@@ -1,0 +1,447 @@
+---
+import { Image } from 'astro:assets';
+import Section from './Section.astro';
+import Panel from './Panel.astro';
+import Icon from './Icon.astro';
+import { projects } from '../data/projects';
+import { getChannels } from '../data/profile';
+import { langFromUrl, t, ui } from '../i18n/config';
+
+const lang = langFromUrl(Astro.url);
+const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
+
+const featured = projects.find((p) => p.featured)!;
+const rest = projects.filter((p) => !p.featured);
+---
+
+<!-- `bare`: el destacado ocupa todo el ancho de la página, el resto vuelve al contenedor. -->
+<Section
+  id="proyectos"
+  title={t(ui.sections.projectsTitle, lang)}
+  eyebrow={`${projects.length} ${t(ui.sections.projectsEyebrow, lang)}`}
+  lead={t(ui.sections.projectsLead, lang)}
+  bare
+>
+  <!-- Destacado: banda a ancho completo, con más peso que todo lo demás. -->
+  <div class="border-y border-line bg-surface" data-reveal>
+    <div class="container-site py-14 md:py-24">
+      <div class="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <div class="lg:col-span-7">
+          <p class="meta mb-6 flex items-center gap-2.5">
+            <span class="h-2 w-2 shrink-0 rounded-full bg-ok"></span>
+            {t(ui.sections.featured, lang)}
+          </p>
+          <h3 class="font-display text-4xl leading-[1.02] font-bold tracking-[-0.04em] md:text-6xl">
+            {t(featured.name, lang)}
+          </h3>
+          <p class="meta mt-4">{t(featured.meta, lang)} · <span class="tabular">{t(featured.year, lang)}</span></p>
+          <p class="mt-8 max-w-[52ch] text-lg leading-relaxed text-muted">{t(featured.body, lang)}</p>
+
+          <div class="mt-10 flex flex-wrap items-center gap-3">
+            {featured.href && (
+              <a
+                href={featured.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3.5 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
+              >
+                {t(ui.sections.viewLive, lang)}
+                <span class="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true">↗</span>
+              </a>
+            )}
+            {featured.repo && (
+              <a
+                href={featured.repo}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2.5 rounded-lg border border-line px-6 py-3.5 text-sm font-medium transition-colors hover:border-accent-text hover:text-accent-text"
+              >
+                <Icon name="github" size={17} />
+                {t(ui.sections.viewCode, lang)}
+              </a>
+            )}
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-10 lg:col-span-5">
+          {featured.highlights && (
+            <div>
+              <p class="meta mb-4">{t(ui.sections.includes, lang)}</p>
+              <ul class="flex flex-col divide-y divide-line border-y border-line">
+                {featured.highlights.map((h) => (
+                  <li class="py-3 text-[15px]">{t(h, lang)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div>
+            <p class="meta mb-4">{t(ui.sections.technologies, lang)}</p>
+            <ul class="flex flex-wrap gap-2">
+              {featured.stack.map((t) => (
+                <li class="rounded-md border border-line bg-bg/60 px-2.5 py-1 font-mono text-xs text-muted">{t}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columnas 2.35 : 1 = proporción de las dos capturas, así miden lo mismo sin recortar. -->
+      {featured.screenshots && (
+        <div class="mt-14 grid gap-4 md:mt-20 lg:grid-cols-[2.35fr_1fr]">
+          {featured.screenshots.map((shot, i) => (
+            <figure>
+              <div class="overflow-hidden rounded-xl border border-line bg-bg">
+                <Image
+                  src={shot.src}
+                  alt={t(shot.alt, lang)}
+                  widths={[480, 800, 1200]}
+                  sizes={i === 0 ? '(min-width: 1024px) 730px, calc(100vw - 32px)' : '(min-width: 1024px) 315px, calc(100vw - 32px)'}
+                  class="h-auto w-full"
+                />
+              </div>
+              <figcaption class="meta mt-3">{t(shot.caption, lang)}</figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <!-- Más proyectos: carrusel horizontal clásico. No secuestra el scroll vertical de la
+       página (el patrón que más molesta); se mueve con el dedo, con las flechas, con la
+       rueda en horizontal o con el teclado. El relleno lateral iguala el margen del sitio,
+       así la primera tarjeta arranca alineada con los títulos. -->
+  <div class="container-site pt-14 md:pt-20">
+    <div class="flex items-end justify-between gap-6" data-reveal>
+      <div>
+        <p class="meta">
+          {/* Las flechas solo existen en escritorio: la pista no puede invitar a usarlas en móvil. */}
+          <span class="md:hidden">{t(ui.sections.scrollHint, lang)}</span>
+          <span class="hidden md:inline">{t(ui.sections.scrollHintDesktop, lang)}</span>
+        </p>
+        <h3 class="mt-2 font-display text-2xl font-semibold tracking-[-0.03em] md:text-3xl">
+          {t(ui.sections.moreProjects, lang)}
+        </h3>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          data-track-toggle
+          aria-label={t(ui.sections.pause, lang)}
+          data-label-pause={t(ui.sections.pause, lang)}
+          data-label-play={t(ui.sections.play, lang)}
+          class="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-accent-text hover:text-accent-text"
+        >
+          <svg data-icon-pause width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.5" height="14" rx="1.2" /><rect x="13.5" y="5" width="3.5" height="14" rx="1.2" /></svg>
+          <svg data-icon-play class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de progreso: fina y ámbar, sigue la posición real del carrusel. -->
+    <div class="mt-6 h-px w-full bg-line">
+      <span data-track-progress class="block h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-200"></span>
+    </div>
+  </div>
+
+  <div class="relative">
+    <!-- Flechas flotando sobre la pista, alineadas con el margen del contenido.
+         Solo en escritorio: en móvil el gesto natural es deslizar con el dedo. -->
+    <span
+      class="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-24 bg-gradient-to-r from-bg to-transparent md:block"
+      aria-hidden="true"
+    ></span>
+    <span
+      class="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-24 bg-gradient-to-l from-bg to-transparent md:block"
+      aria-hidden="true"
+    ></span>
+
+    <button
+      type="button"
+      data-track-prev
+      aria-label={t(ui.sections.prev, lang)}
+      class="absolute top-1/2 left-3 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface/90 text-text shadow-[0_8px_30px_-8px_rgb(0_0_0/0.35)] backdrop-blur-md transition hover:scale-105 hover:border-accent-text hover:text-accent-text md:flex"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m0 0 6-6m-6 6 6 6" /></svg>
+    </button>
+    <button
+      type="button"
+      data-track-next
+      aria-label={t(ui.sections.next, lang)}
+      class="absolute top-1/2 right-3 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface/90 text-text shadow-[0_8px_30px_-8px_rgb(0_0_0/0.35)] backdrop-blur-md transition hover:scale-105 hover:border-accent-text hover:text-accent-text md:flex"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" /></svg>
+    </button>
+
+  <div
+    data-track
+    tabindex="0"
+    role="region"
+    aria-label={t(ui.sections.carousel, lang)}
+    class="track mt-6 flex gap-4 overflow-x-auto pb-4 [scrollbar-width:none] md:mt-8 [&::-webkit-scrollbar]:hidden"
+  >
+    {
+      rest.map((p) => (
+        <div class="flex w-[82vw] shrink-0 sm:w-[58vw] lg:w-[352px]">
+          <Panel class="flex w-full flex-col" bodyClass="flex flex-1 flex-col p-6">
+            <div class="flex items-baseline justify-between gap-3">
+              <h3 class="font-display text-lg leading-snug font-semibold tracking-[-0.02em]">{t(p.name, lang)}</h3>
+              <span class="meta tabular shrink-0">{t(p.year, lang)}</span>
+            </div>
+            <p class="meta mt-1.5">{t(p.meta, lang)}</p>
+            <p class="mt-4 flex-1 text-[15px] leading-relaxed text-muted">{t(p.body, lang)}</p>
+
+            <ul class="mt-5 flex flex-wrap gap-1.5">
+              {p.stack.map((tech) => (
+                <li class="rounded border border-line bg-bg/60 px-2 py-0.5 font-mono text-[11px] text-muted">{tech}</li>
+              ))}
+            </ul>
+
+            <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium">
+              {p.href && (
+                <a
+                  href={p.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="group inline-flex items-center gap-1.5 font-semibold text-accent-text hover:underline"
+                >
+                  {t(ui.sections.viewProject, lang)}
+                  <span class="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true">↗</span>
+                </a>
+              )}
+              {p.repo && (
+                <a
+                  href={p.repo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1.5 font-semibold text-accent-text hover:underline"
+                >
+                  <Icon name="github" size={14} />
+                  {t(ui.sections.viewCode, lang)}
+                </a>
+              )}
+              {!p.href && !p.repo && <span class="meta">{t(ui.sections.privateCode, lang)}</span>}
+            </div>
+          </Panel>
+        </div>
+      ))
+    }
+
+    <a
+      href={whatsapp.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="cta-pulse group flex w-[82vw] shrink-0 flex-col justify-between rounded-xl border border-dashed p-6 transition-colors hover:bg-surface/40 sm:w-[58vw] lg:w-[352px]"
+    >
+      <div>
+        <p class="meta mb-4">{t(ui.sections.yourProject, lang)}</p>
+        <h3 class="font-display text-lg leading-snug font-semibold tracking-[-0.02em]">
+          {t(ui.sections.yoursNext, lang)}
+        </h3>
+        <p class="mt-4 text-[15px] leading-relaxed text-muted">
+          {t(ui.sections.yoursNextBody, lang)}
+        </p>
+      </div>
+      <span class="mt-5 inline-flex items-center gap-2 text-xs text-accent-text">
+        {t(ui.sections.letsTalk, lang)}
+        <span class="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true">↗</span>
+      </span>
+    </a>
+  </div>
+  </div>
+</Section>
+
+<style>
+  /* La tarjeta de llamada a la acción: borde ámbar en ambos modos y un latido suave,
+     un anillo que se expande y se desvanece. Es la única tarjeta que invita a escribir,
+     así que se distingue del resto sin gritar. */
+  .cta-pulse {
+    border-color: color-mix(in oklab, var(--color-accent) 60%, transparent);
+  }
+
+  .cta-pulse:hover {
+    border-color: var(--color-accent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cta-pulse {
+      animation: cta-breathe 3s ease-out infinite;
+    }
+  }
+
+  @keyframes cta-breathe {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-accent) 30%, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 12px color-mix(in oklab, var(--color-accent) 0%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-accent) 0%, transparent);
+    }
+  }
+
+  /* El carrusel va a todo el ancho, pero su relleno lateral iguala el margen del
+     contenido (contenedor de 1120px + 2rem), así la primera tarjeta queda alineada
+     con el título. `scroll-padding` hace que el imán del carrusel respete ese margen;
+     sin él, la primera tarjeta se pega al borde al soltar el dedo.
+     Se usa 100% y no 100vw para no contar el ancho de la barra de desplazamiento. */
+  .track {
+    padding-inline: 1rem;
+    scroll-padding-inline: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .track {
+      padding-inline: max(2rem, calc((100% - var(--site-max)) / 2 + 2rem));
+      scroll-padding-inline: max(2rem, calc((100% - var(--site-max)) / 2 + 2rem));
+    }
+  }
+</style>
+
+<script>
+  const track = document.querySelector<HTMLElement>('[data-track]');
+  const bar = document.querySelector<HTMLElement>('[data-track-progress]');
+  const prev = document.querySelector<HTMLButtonElement>('[data-track-prev]');
+  const next = document.querySelector<HTMLButtonElement>('[data-track-next]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-track-toggle]');
+  const iconPause = toggle?.querySelector<HTMLElement>('[data-icon-pause]');
+  const iconPlay = toggle?.querySelector<HTMLElement>('[data-icon-play]');
+
+  if (track) {
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const SPEED = 34; // píxeles por segundo: lento, para poder leer mientras pasa
+
+    // El bucle sin costura necesita una segunda copia de las tarjetas: cuando la pista
+    // llega al final del primer juego, se resta ese ancho y el salto es invisible porque
+    // lo que se ve en ese punto es idéntico. Las copias son decorativas: no se anuncian
+    // en lectores de pantalla ni reciben foco con el tabulador.
+    const originals = [...track.children] as HTMLElement[];
+    let loopWidth = 0;
+
+    const buildClones = () => {
+      track.querySelectorAll('[data-clone]').forEach((el) => el.remove());
+      if (calm.matches) return;
+      for (const node of originals) {
+        const copy = node.cloneNode(true) as HTMLElement;
+        copy.dataset.clone = '';
+        copy.setAttribute('aria-hidden', 'true');
+        copy.querySelectorAll('a, button').forEach((el) => el.setAttribute('tabindex', '-1'));
+        track.append(copy);
+      }
+      const last = originals[originals.length - 1];
+      loopWidth = last.offsetLeft + last.offsetWidth - originals[0].offsetLeft + 16; // 16 = gap
+    };
+
+    const step = () => {
+      const first = originals[0];
+      const second = originals[1];
+      if (!first) return track.clientWidth;
+      return second ? second.offsetLeft - first.offsetLeft : first.offsetWidth;
+    };
+
+    const paint = () => {
+      if (!bar) return;
+      const span = loopWidth || track.scrollWidth - track.clientWidth;
+      const pos = span > 0 ? (track.scrollLeft % span) / span : 0;
+      bar.style.transform = `scaleX(${pos})`;
+    };
+
+    track.addEventListener('scroll', paint, { passive: true });
+
+    // ---- Movimiento continuo ------------------------------------------------
+    // Se avanza por tiempo transcurrido, no por fotograma, así la velocidad es la misma
+    // en una pantalla de 60 Hz que en una de 120 Hz.
+    let raf = 0;
+    let last = 0;
+    // La posición se lleva aparte con decimales: `scrollLeft` redondea a píxeles enteros
+    // y, al sumar sobre el valor ya redondeado, el error se acumula y el carrusel se
+    // acelera (medido: casi el doble de la velocidad pedida).
+    let pos = 0;
+    let applied = 0;
+    let paused = false; // pausa pedida por la persona: manda sobre lo demás
+    let visible = false;
+    let held = false; // el puntero encima, el dedo en la pista o el foco dentro
+
+    const frame = (now: number) => {
+      const delta = last ? (now - last) / 1000 : 0;
+      last = now;
+      // Si la posición cambió por fuera (rueda, dedo, flechas), se adopta esa.
+      if (Math.abs(track.scrollLeft - applied) > 2) pos = track.scrollLeft;
+      pos += SPEED * Math.min(delta, 0.05); // el tope evita un salto al volver de otra pestaña
+      if (loopWidth > 0 && pos >= loopWidth) pos -= loopWidth;
+      track.scrollLeft = pos;
+      applied = track.scrollLeft;
+      raf = requestAnimationFrame(frame);
+    };
+
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      last = 0;
+      pos = track.scrollLeft;
+    };
+
+    const start = () => {
+      stop();
+      if (paused || held || !visible || calm.matches || loopWidth <= 0) return;
+      raf = requestAnimationFrame(frame);
+    };
+
+    const hold = (value: boolean) => {
+      held = value;
+      start();
+    };
+
+    // Las flechas mueven una tarjeta y el movimiento continúa después.
+    const move = (dir: number) => {
+      stop();
+      const target = track.scrollLeft + dir * step();
+      track.scrollTo({ left: target < 0 && loopWidth > 0 ? target + loopWidth : target, behavior: 'smooth' });
+      window.setTimeout(start, 500);
+    };
+    prev?.addEventListener('click', () => move(-1));
+    next?.addEventListener('click', () => move(1));
+
+    const setPaused = (value: boolean) => {
+      paused = value;
+      iconPause?.classList.toggle('hidden', value);
+      iconPlay?.classList.toggle('hidden', !value);
+      toggle?.setAttribute('aria-label', (value ? toggle.dataset.labelPlay : toggle.dataset.labelPause) ?? '');
+      start();
+    };
+    toggle?.addEventListener('click', () => setPaused(!paused));
+
+    // Se detiene mientras alguien lo mira, lo toca o navega con el teclado dentro.
+    for (const event of ['pointerenter', 'focusin', 'touchstart'] as const) {
+      track.addEventListener(event, () => hold(true), { passive: true });
+    }
+    for (const event of ['pointerleave', 'focusout', 'touchend'] as const) {
+      track.addEventListener(event, () => hold(false), { passive: true });
+    }
+
+    new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        start();
+      },
+      { threshold: 0.2 },
+    ).observe(track);
+
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+
+    const rebuild = () => {
+      stop();
+      track.scrollLeft = 0;
+      buildClones();
+      toggle?.classList.toggle('hidden', calm.matches);
+      paint();
+      start();
+    };
+    calm.addEventListener('change', rebuild);
+    window.addEventListener('resize', rebuild);
+    rebuild();
+  }
+</script>

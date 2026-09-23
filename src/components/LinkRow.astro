@@ -1,0 +1,78 @@
+---
+// La fila de enlace: el componente de contacto. Es un <a> real, así que funciona
+// sin JS y es navegable con teclado.
+import Icon from './Icon.astro';
+
+interface Props {
+  href: string;
+  label: string;
+  icon?: string;
+  meta?: string;
+  external?: boolean;
+  accent?: boolean;
+  /** Texto que se copia al portapapeles al pulsar (el correo, que no se muestra). */
+  copy?: string;
+  copiedLabel?: string;
+}
+const { href, label, icon, meta, external = true, accent = false, copy, copiedLabel } = Astro.props;
+const rel = external ? 'noopener noreferrer' : undefined;
+const target = external ? '_blank' : undefined;
+---
+
+<a
+  href={href}
+  target={target}
+  rel={rel}
+  data-copy={copy}
+  class="group flex items-center justify-between gap-4 px-5 py-5 transition-colors duration-200 hover:bg-surface md:px-8 md:py-6"
+>
+  <span class="flex min-w-0 items-center gap-4 md:gap-5">
+    {
+      icon && (
+        <span
+          class={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+            accent
+              ? 'border-accent bg-accent text-on-accent'
+              : 'border-line bg-bg text-text group-hover:border-accent-text group-hover:text-accent-text'
+          }`}
+        >
+          <Icon name={icon} size={20} />
+        </span>
+      )
+    }
+    <span class="flex min-w-0 flex-col gap-1">
+      <span
+        class={`font-display text-lg font-semibold tracking-[-0.02em] transition-colors md:text-2xl ${
+          accent ? 'text-accent-text' : 'group-hover:text-accent-text'
+        }`}
+      >
+        {label}
+      </span>
+      {/* En móvil el dato va debajo: ocultarlo dejaría al visitante sin ver
+          el número ni el correo, que es justo lo que viene a buscar. */}
+      {meta && <span class="meta truncate sm:hidden">{meta}</span>}
+    </span>
+  </span>
+
+  <span class="flex shrink-0 items-center gap-3">
+    {/* Aviso de copiado: vive aquí y no en un toast suelto, así aparece justo donde
+        el visitante hizo clic. `role="status"` lo anuncia en lectores de pantalla. */}
+    {copiedLabel && (
+      <span
+        data-copied
+        role="status"
+        class="hidden items-center gap-1.5 text-[13px] font-medium text-ok"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m5 13 4 4 10-11" />
+        </svg>
+        {copiedLabel}
+      </span>
+    )}
+    {meta && <span class="meta hidden sm:inline">{meta}</span>}
+    <span
+      class="text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-accent-text"
+      aria-hidden="true">↗</span
+    >
+  </span>
+</a>

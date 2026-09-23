@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+
+/* opsz: Inter cambia de forma según el tamaño (más compacta en titulares), como SF Pro. */
+@import '@fontsource-variable/inter/opsz.css';
+@import '@fontsource-variable/geist-mono';
+
+@theme {
+  /* Paleta navy + ámbar, con dos reglas de uso que dan significado a cada color:
+     - ámbar = ACCIÓN. Solo CTA, hover y foco. Si aparece en texto decorativo
+       deja de significar "esto se puede clicar".
+     - verde = ESTADO DEL SISTEMA. Solo status, método HTTP y diffs. Nunca es clicable. */
+  --color-bg: #0a1628;
+  --color-surface: #10203a;
+  --color-bar: #0d1b32;
+  /* El footer se despega del fondo: más profundo en oscuro, más frío en claro. */
+  --color-footer: #081221;
+  --color-text: #f0f4f8;
+  --color-muted: #8296b0;
+  --color-accent: #f59e0b; /* relleno de botones */
+  --color-accent-text: #f59e0b; /* ámbar cuando se usa como texto o borde */
+  --color-on-accent: #0a1628; /* tinta sobre un relleno ámbar */
+  --color-ok: #34d399;
+  --color-line: #1e3151;
+
+  /* Inter es la alternativa libre más cercana a SF Pro. En Apple se usa la del sistema
+     (-apple-system) si está: es la original. El monoespaciado queda solo para nombres de
+     tecnologías, donde sí significa algo (es texto de código). */
+  --font-display: 'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+}
+
+/* Modo claro. Solo se redefinen los tokens: ningún componente decide su color.
+   El ámbar como RELLENO no cambia (tinta navy encima: 8.4:1); como TEXTO se oscurece,
+   porque #f59e0b sobre fondo claro no llega ni a 2:1.
+   Contrastes medidos sobre bg: text 16.8, muted 6.2, accent-text 4.6, ok 5.1.
+   Todos superan AA (4.5:1). Los bordes (--color-line) son decorativos: no llevan
+   información por sí solos, el texto de cada control ya cumple. */
+:root[data-theme='light'] {
+  --color-bg: #f4f6fa;
+  --color-surface: #ffffff;
+  --color-bar: #e9eef5;
+  --color-footer: #e4eaf4;
+  --color-text: #0a1628;
+  --color-muted: #4a5d78;
+  --color-accent-text: #b45309;
+  --color-ok: #047857;
+  --color-line: #d3dce8;
+}
+
+/* Ancho del contenido. Crece en pantallas grandes para no dejar franjas vacías, pero
+   no tanto que las líneas de texto se vuelvan incómodas de leer. Todo el sitio lo usa,
+   incluido el margen del carrusel, así que cambiarlo aquí lo cambia en todas partes. */
+:root {
+  --site-max: 1120px;
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --site-max: 1220px;
+  }
+}
+
+@media (min-width: 1536px) {
+  :root {
+    --site-max: 1380px;
+  }
+}
+
+.container-site {
+  width: 100%;
+  max-width: var(--site-max);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+  .container-site {
+    padding-inline: 2rem;
+  }
+}
+
+html {
+  background-color: var(--color-bg);
+  color-scheme: dark;
+  scroll-padding-top: 6rem; /* barra flotante: 56px + 12px de margen, con aire */
+  -webkit-text-size-adjust: 100%;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* Foco visible siempre: nunca outline:none sin reemplazo. */
+:focus-visible {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Metadato: texto pequeño y apagado para rótulos, fechas y datos secundarios. */
+.meta {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  letter-spacing: -0.005em;
+  color: var(--color-muted);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Icono del botón de tema: se alterna por CSS, no por JS, así nunca hay un
+   instante mostrando el icono del modo equivocado. Oscuro -> sol, claro -> luna. */
+html[data-theme='light'] .theme-icon-sun,
+html:not([data-theme='light']) .theme-icon-moon {
+  display: none;
+}
+
+/* Estado inicial de las animaciones. Solo se aplica si JS va a animarlas:
+   sin esta clase en <html>, el contenido se ve aunque el script falle. */
+.js-motion [data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* inline-block: un <span> en línea no admite transform, y sin él la línea no se desplaza. */
+[data-line] {
+  display: inline-block;
+}
+
+.js-motion [data-bar] {
+  transform: scaleX(0);
+}
+
+.js-motion [data-line] {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+/* El movimiento por scroll provoca mareo real en personas con trastornos
+   vestibulares. Aquí no se atenúa: se apaga. */
+@media (prefers-reduced-motion: reduce) {
+  .js-motion [data-reveal],
+  .js-motion [data-bar] {
+  transform: scaleX(0);
+}
+
+.js-motion [data-line] {
+    opacity: 1;
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

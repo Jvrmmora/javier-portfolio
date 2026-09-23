@@ -1,0 +1,28 @@
+---
+// La página completa. Se monta en / (español) y en /en/ (inglés); cada componente
+// lee el idioma de la URL, así que este archivo no necesita saber cuál es.
+import Base from '../layouts/Base.astro';
+import Nav from './Nav.astro';
+import Hero from './Hero.astro';
+import Metrics from './Metrics.astro';
+import Services from './Services.astro';
+import Projects from './Projects.astro';
+import Experience from './Experience.astro';
+import Stack from './Stack.astro';
+import Contact from './Contact.astro';
+import Motion from './Motion.astro';
+---
+
+<Base>
+  <Nav />
+  <Hero />
+  <main id="contenido">
+    <Metrics />
+    <Services />
+    <Projects />
+    <Experience />
+    <Stack />
+    <Contact />
+  </main>
+  <Motion />
+</Base>

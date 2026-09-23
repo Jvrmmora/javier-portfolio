@@ -1,0 +1,23 @@
+---
+// Chip de tecnología: logo + nombre. Si la tecnología no tiene logo real disponible,
+// se muestra solo el nombre con el mismo tamaño de chip, sin hueco ni marca inventada.
+import Icon from './Icon.astro';
+
+interface Props {
+  name: string;
+  detail?: string;
+  size?: 'sm' | 'md';
+}
+const { name, detail, size = 'sm' } = Astro.props;
+const md = size === 'md';
+---
+
+<li
+  class={`inline-flex items-center rounded-md border border-line bg-bg/60 font-mono text-text/90 ${
+    md ? 'gap-2.5 px-3 py-2 text-[13px]' : 'gap-1.5 px-2.5 py-1 text-xs'
+  }`}
+>
+  <Icon name={name} size={md ? 18 : 14} />
+  <span>{name}</span>
+  {detail && <span class="text-muted">· {detail}</span>}
+</li>

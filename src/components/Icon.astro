@@ -1,0 +1,25 @@
+---
+import { getIcon } from '../lib/icons';
+
+interface Props {
+  name: string;
+  size?: number;
+  class?: string;
+}
+const { name, size = 20, class: extra = '' } = Astro.props;
+const icon = getIcon(name);
+---
+
+{
+  icon && (
+    <svg
+      viewBox={icon.viewBox}
+      width={size}
+      height={size}
+      role="img"
+      aria-label={name}
+      class={`shrink-0 ${extra}`}
+      set:html={icon.body}
+    />
+  )
+}

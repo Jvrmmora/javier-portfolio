@@ -1,0 +1,13 @@
+{
+  // Sitio estático servido por Cloudflare Workers. Sin `main`: no hay código de
+  // servidor todavía, solo los archivos de `dist/`. El adaptador de Astro se añadirá
+  // en la Fase 3, cuando exista el endpoint del chat.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "javiermontano",
+  "compatibility_date": "2026-09-22",
+  "assets": {
+    "directory": "./dist",
+    // Sirve /en/ y /en igual, y deja las URL sin barra final.
+    "html_handling": "auto-trailing-slash"
+  }
+}

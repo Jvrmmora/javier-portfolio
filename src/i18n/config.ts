@@ -1,0 +1,106 @@
+export const LANGS = ['es', 'en'] as const;
+export type Lang = (typeof LANGS)[number];
+export const DEFAULT_LANG: Lang = 'es';
+
+/** Texto que existe en los dos idiomas. Todo el contenido del sitio usa esta forma. */
+export interface L {
+  es: string;
+  en: string;
+}
+
+export const t = (value: L, lang: Lang): string => value[lang];
+export const tList = (values: readonly L[], lang: Lang): string[] => values.map((v) => v[lang]);
+
+/** El español vive en la raíz y el inglés bajo /en/, así la URL principal queda limpia. */
+export const localizedPath = (lang: Lang, path = '/'): string =>
+  lang === DEFAULT_LANG ? path : `/en${path}`;
+
+/** Deriva el idioma de la URL. Sin prefijo `/en` es español. */
+export const langFromUrl = (url: URL): Lang => (url.pathname.startsWith('/en') ? 'en' : 'es');
+
+export const ui = {
+  nav: {
+    services: { es: 'Servicios', en: 'Services' },
+    projects: { es: 'Proyectos', en: 'Projects' },
+    experience: { es: 'Experiencia', en: 'Experience' },
+    stack: { es: 'Stack', en: 'Stack' },
+    contact: { es: 'Contacto', en: 'Contact' },
+  },
+  a11y: {
+    skip: { es: 'Saltar al contenido', en: 'Skip to content' },
+    mainNav: { es: 'Principal', en: 'Main' },
+    toLight: { es: 'Cambiar a modo claro', en: 'Switch to light mode' },
+    toDark: { es: 'Cambiar a modo oscuro', en: 'Switch to dark mode' },
+    themeToggle: { es: 'Cambiar tema', en: 'Toggle theme' },
+    langSwitch: { es: 'Ver este sitio en inglés', en: 'Ver este sitio en español' },
+    home: { es: 'Javier Montaño — inicio', en: 'Javier Montaño — home' },
+  },
+  hero: {
+    downloadCv: { es: 'Descargar CV', en: 'Download CV' },
+    whatsapp: { es: 'Hablemos por WhatsApp', en: 'Message me on WhatsApp' },
+    profile: { es: 'Perfil', en: 'Profile' },
+    available: { es: 'Disponible', en: 'Available' },
+  },
+  sections: {
+    servicesEyebrow: { es: 'formas de trabajar juntos', en: 'ways to work together' },
+    servicesTitle: { es: 'Servicios', en: 'Services' },
+    servicesLead: {
+      es: 'En qué puedo ayudarte, cada una con un caso real que lo respalda.',
+      en: 'How I can help, each backed by a real case.',
+    },
+    servicesProof: { es: 'Lo respalda', en: 'Backed by' },
+    projectsEyebrow: { es: 'proyectos', en: 'projects' },
+    projectsTitle: { es: 'Proyectos', en: 'Projects' },
+    projectsLead: {
+      es: 'Lo que he construido y puesto en producción.',
+      en: 'What I have built and shipped to production.',
+    },
+    featured: { es: 'Proyecto destacado', en: 'Featured project' },
+    moreProjects: { es: 'Más proyectos', en: 'More projects' },
+    scrollHint: { es: 'Desliza para verlos', en: 'Swipe to browse' },
+    scrollHintDesktop: { es: 'Usa las flechas o desliza', en: 'Use the arrows or scroll' },
+    prev: { es: 'Ver proyectos anteriores', en: 'See previous projects' },
+    next: { es: 'Ver más proyectos', en: 'See more projects' },
+    carousel: { es: 'Más proyectos, carrusel', en: 'More projects, carousel' },
+    pause: { es: 'Pausar el carrusel', en: 'Pause the carousel' },
+    play: { es: 'Reanudar el carrusel', en: 'Resume the carousel' },
+    includes: { es: 'Qué incluye', en: 'What it includes' },
+    technologies: { es: 'Tecnologías', en: 'Technologies' },
+    viewLive: { es: 'Ver en producción', en: 'View live' },
+    viewProject: { es: 'Ver proyecto', en: 'View project' },
+    viewCode: { es: 'Ver código', en: 'View code' },
+    privateCode: { es: 'Código privado', en: 'Private code' },
+    yourProject: { es: 'Tu proyecto', en: 'Your project' },
+    yoursNext: { es: '¿El siguiente es el tuyo?', en: 'Is yours next?' },
+    yoursNextBody: {
+      es: 'Cuéntame qué necesitas construir y te digo con franqueza si puedo ayudarte y cómo lo abordaría.',
+      en: 'Tell me what you need to build and I will tell you honestly whether I can help and how I would approach it.',
+    },
+    letsTalk: { es: 'Hablemos', en: 'Let’s talk' },
+    experienceEyebrow: { es: 'Desde 2019', en: 'Since 2019' },
+    experienceTitle: { es: 'Experiencia', en: 'Experience' },
+    experienceLead: {
+      es: 'Dónde he trabajado y qué resultados dejé.',
+      en: 'Where I have worked and the results I left behind.',
+    },
+    current: { es: 'Actual', en: 'Current' },
+    stackEyebrow: { es: 'Herramientas y formación', en: 'Tools and training' },
+    stackTitle: { es: 'Stack', en: 'Stack' },
+    stackLead: {
+      es: 'Con qué trabajo a diario y lo que he estudiado.',
+      en: 'What I work with daily and what I have studied.',
+    },
+    certifications: { es: 'Certificaciones', en: 'Certifications' },
+    education: { es: 'Educación', en: 'Education' },
+    contactEyebrow: { es: 'Hablemos', en: 'Let’s talk' },
+    contactTitle: { es: 'Contáctame', en: 'Get in touch' },
+    footerStatus: { es: 'Sitio operativo', en: 'Site operational' },
+    footerBuilt: { es: 'Hecho con Astro y Tailwind', en: 'Built with Astro and Tailwind' },
+    footerRights: { es: 'Todos los derechos reservados.', en: 'All rights reserved.' },
+    emailCopied: { es: 'Correo copiado', en: 'Email copied' },
+    contactLead: {
+      es: '¿Tienes un proyecto backend, una integración que no cuadra o una migración que da miedo? Escríbeme por el canal que prefieras.',
+      en: 'Have a backend project, an integration that will not line up, or a migration that scares you? Reach me on whichever channel you prefer.',
+    },
+  },
+} as const;
