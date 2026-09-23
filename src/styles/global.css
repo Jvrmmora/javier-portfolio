@@ -80,6 +80,19 @@
   }
 }
 
+/* Barra de progreso de lectura: una línea de 2px arriba del todo. */
+.read-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 50;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background-color: var(--color-accent);
+  pointer-events: none;
+}
+
 html {
   background-color: var(--color-bg);
   color-scheme: dark;
@@ -134,7 +147,8 @@ html:not([data-theme='light']) .theme-icon-moon {
 
 /* Estado inicial de las animaciones. Solo se aplica si JS va a animarlas:
    sin esta clase en <html>, el contenido se ve aunque el script falle. */
-.js-motion [data-reveal] {
+.js-motion [data-reveal],
+.js-motion [data-hero-step] {
   opacity: 0;
   transform: translateY(20px);
 }
@@ -142,6 +156,13 @@ html:not([data-theme='light']) .theme-icon-moon {
 /* inline-block: un <span> en línea no admite transform, y sin él la línea no se desplaza. */
 [data-line] {
   display: inline-block;
+}
+
+/* Las palabras esperan bajo su máscara hasta que el motor de animación las sube.
+   `translateY` y `opacity` son las dos únicas propiedades que se animan en todo el
+   sitio: el navegador las resuelve en la tarjeta gráfica, sin recalcular el diseño. */
+.js-motion [data-word] {
+  transform: translateY(110%);
 }
 
 .js-motion [data-bar] {
@@ -157,7 +178,14 @@ html:not([data-theme='light']) .theme-icon-moon {
    vestibulares. Aquí no se atenúa: se apaga. */
 @media (prefers-reduced-motion: reduce) {
   .js-motion [data-reveal],
-  .js-motion [data-bar] {
+  /* Las palabras esperan bajo su máscara hasta que el motor de animación las sube.
+   `translateY` y `opacity` son las dos únicas propiedades que se animan en todo el
+   sitio: el navegador las resuelve en la tarjeta gráfica, sin recalcular el diseño. */
+.js-motion [data-word] {
+  transform: translateY(110%);
+}
+
+.js-motion [data-bar] {
   transform: scaleX(0);
 }
 

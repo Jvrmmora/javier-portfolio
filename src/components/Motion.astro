@@ -1,6 +1,11 @@
 ---
-// El movimiento vive aislado aquí. Si este script falla o no carga, el sitio
-// sigue siendo legible: el CSS solo oculta lo animable cuando hay JS.
+// El movimiento vive aislado aquí. Si este script falla o no carga, el sitio sigue
+// siendo legible: el CSS solo oculta lo animable cuando hay JS.
+//
+// Dos reglas que gobiernan todo lo de abajo:
+//  1. Solo se animan `transform` y `opacity`. Cualquier otra propiedad (alto, margen,
+//     sombra) obliga al navegador a recalcular el diseño en cada fotograma del scroll.
+//  2. Una sola familia de easing: todo arranca rápido y frena al final. Nada rebota.
 ---
 
 <script>
@@ -8,12 +13,16 @@
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
   import Lenis from 'lenis';
 
+  const EASE = 'expo.out';
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Avisa al seguro del <head> que el motor de animación sí arrancó.
   document.documentElement.dataset.motionReady = 'true';
 
-  if (!reduced) {
+  if (reduced) {
+    // Sin animación: quitar el estado inicial para que nada quede invisible.
+    document.documentElement.classList.remove('js-motion');
+  } else {
     gsap.registerPlugin(ScrollTrigger);
 
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
@@ -21,48 +30,115 @@
     gsap.ticker.add((t) => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
 
-    // Grupos: los hijos entran escalonados con un solo disparador, así el orden se nota.
+    // --- Barra de progreso de lectura -------------------------------------
+    const progress = document.querySelector<HTMLElement>('[data-read-progress]');
+    if (progress) {
+      ScrollTrigger.create({
+        start: 0,
+        end: 'max',
+        onUpdate: (self) => gsap.set(progress, { scaleX: self.progress }),
+      });
+    }
+
+    // --- Texto que sube desde su máscara ----------------------------------
+    // `fromTo` y no `to`: el CSS deja las palabras en translateY(110%), que GSAP lee
+    // como píxeles. Animar solo `yPercent` dejaría ese desplazamiento intacto y el
+    // texto no subiría nunca. Fijando el origen, las dos medidas quedan en cero.
+    const WORDS_FROM = { yPercent: 110, y: 0 };
+    const WORDS_TO = { yPercent: 0, y: 0, duration: 1, ease: EASE, stagger: 0.055 };
+
+    const revealWords = (scope: HTMLElement, delay = 0) =>
+      gsap.fromTo(scope.querySelectorAll('[data-word]'), WORDS_FROM, { ...WORDS_TO, delay });
+
+    gsap.utils.toArray<HTMLElement>('[data-reveal-text]').forEach((el) => {
+      if (el.hasAttribute('data-immediate')) return; // los del hero los lanza la entrada
+      gsap.fromTo(el.querySelectorAll('[data-word]'), WORDS_FROM, {
+        ...WORDS_TO,
+        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+      });
+    });
+
+    // --- Entrada del hero: un orden, no todo a la vez ---------------------
+    const hero = document.getElementById('top');
+    if (hero) {
+      const tl = gsap.timeline({ defaults: { ease: EASE, duration: 0.9 } });
+
+      tl.to(hero.querySelectorAll('[data-hero-step]'), { opacity: 1, y: 0, stagger: 0.09 }, 0.15);
+
+      hero.querySelectorAll<HTMLElement>('[data-reveal-text][data-immediate]').forEach((el, i) => {
+        tl.add(revealWords(el, 0), 0.25 + i * 0.12);
+      });
+
+      // La foto entra con un acercamiento muy leve: da profundidad sin que se note el truco.
+      const portrait = hero.querySelector<HTMLElement>('[data-hero-portrait]');
+      if (portrait) tl.fromTo(portrait, { scale: 1.06 }, { scale: 1, duration: 1.4 }, 0.1);
+
+      // Paralaje al bajar: la foto se mueve menos que el texto.
+      if (portrait && window.matchMedia('(min-width: 1024px)').matches) {
+        gsap.to(portrait, {
+          yPercent: -6,
+          ease: 'none',
+          scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.5 },
+        });
+      }
+    }
+
+    // --- Bloques que aparecen al entrar en pantalla -----------------------
+    // Los grupos entran escalonados con un solo disparador, así se nota el orden.
     gsap.utils.toArray<HTMLElement>('[data-reveal-group]').forEach((group) => {
       gsap.to(group.querySelectorAll(':scope > [data-reveal]'), {
         opacity: 1,
         y: 0,
-        duration: 0.7,
-        ease: 'power2.out',
-        stagger: 0.09,
+        duration: 0.8,
+        ease: EASE,
+        stagger: 0.08,
         scrollTrigger: { trigger: group, start: 'top 88%', once: true },
       });
     });
 
+    gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
+      if (el.parentElement?.hasAttribute('data-reveal-group')) return;
+      gsap.to(el, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: EASE,
+        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+      });
+    });
+
+    // --- Detalles ---------------------------------------------------------
+    // Subrayado de las métricas: crece de izquierda a derecha.
     gsap.utils.toArray<HTMLElement>('[data-bar]').forEach((el) => {
       gsap.to(el, {
         scaleX: 1,
-        duration: 0.8,
-        ease: 'power3.out',
+        duration: 0.9,
+        ease: EASE,
         delay: 0.25,
         scrollTrigger: { trigger: el, start: 'top 92%', once: true },
       });
     });
 
-    gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
-      // Los de un grupo ya los anima el bloque de arriba.
-      if (el.parentElement?.hasAttribute('data-reveal-group')) return;
-      gsap.to(el, {
-        opacity: 1,
-        y: 0,
+    // Los puntos de la línea de tiempo aparecen con un pequeño golpe.
+    gsap.utils.toArray<HTMLElement>('[data-dot]').forEach((el) => {
+      gsap.from(el, {
+        scale: 0,
         duration: 0.7,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+        ease: 'back.out(2)',
+        scrollTrigger: { trigger: el, start: 'top 90%', once: true },
       });
     });
 
-    // Las líneas de la respuesta JSON aparecen una a una, como si llegaran del servidor.
-    gsap.to('[data-line]', {
-      opacity: 1,
-      x: 0,
-      duration: 0.5,
-      ease: 'power2.out',
-      stagger: 0.09,
-      delay: 0.5,
+    // Las líneas de la respuesta JSON del footer llegan una a una.
+    gsap.utils.toArray<HTMLElement>('[data-line]').forEach((el, i) => {
+      gsap.to(el, {
+        opacity: 1,
+        x: 0,
+        duration: 0.5,
+        ease: EASE,
+        delay: i * 0.08,
+        scrollTrigger: { trigger: el, start: 'top 92%', once: true },
+      });
     });
 
     // Las métricas cuentan hacia arriba al entrar. El HTML ya trae el valor final:
@@ -73,7 +149,7 @@
       const counter = { value: 0 };
       gsap.to(counter, {
         value: target,
-        duration: 1.4,
+        duration: 1.6,
         ease: 'power2.out',
         scrollTrigger: { trigger: el, start: 'top 90%', once: true },
         // El 0 se pone al arrancar la animación, no al cargar: si se pusiera antes,
@@ -92,8 +168,5 @@
 
     // Recalcula posiciones una vez que las fuentes cambian las alturas de línea.
     document.fonts?.ready.then(() => ScrollTrigger.refresh());
-  } else {
-    // Sin animación: quitar el estado inicial para que nada quede invisible.
-    document.documentElement.classList.remove('js-motion');
   }
 </script>

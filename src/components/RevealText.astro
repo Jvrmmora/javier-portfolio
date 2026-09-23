@@ -1,0 +1,36 @@
+---
+// Revelado por palabras: cada una sube desde detrás de una máscara. El texto completo
+// se parte aquí, en el servidor, no mutando el DOM en el navegador: así el buscador y
+// los lectores de pantalla ven una frase normal (`aria-label`) y nunca letras sueltas.
+interface Props {
+  text: string;
+  as?: 'h1' | 'h2' | 'h3' | 'p' | 'span';
+  class?: string;
+  /** El hero se revela al cargar; el resto espera a entrar en pantalla. */
+  immediate?: boolean;
+  /** Segundos de espera antes de arrancar, para encadenar varios bloques. */
+  delay?: number;
+}
+
+const { text, as: Tag = 'span', class: extra = '', immediate = false, delay = 0 } = Astro.props;
+const words = text.split(' ');
+---
+
+<Tag
+  class={extra}
+  aria-label={text}
+  data-reveal-text
+  data-immediate={immediate ? '' : undefined}
+  style={delay ? `--reveal-delay: ${delay}s` : undefined}
+>
+  {
+    words.map((word, i) => (
+      <span class="inline-flex overflow-hidden align-bottom" aria-hidden="true">
+        <span class="inline-block" data-word>
+          {word}
+          {i < words.length - 1 ? ' ' : ''}
+        </span>
+      </span>
+    ))
+  }
+</Tag>

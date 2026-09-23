@@ -79,15 +79,20 @@ const canonical = new URL(localizedPath(lang), site);
          a los 2s se retira la clase y TODO el contenido aparece. Sin esto, un fallo
          del script dejaría la página en blanco bajo el hero. -->
     <script is:inline>
-      document.documentElement.classList.add('js-motion');
-      setTimeout(function () {
-        if (!document.documentElement.dataset.motionReady) {
-          document.documentElement.classList.remove('js-motion');
-        }
-      }, 2000);
+      // Quien pide menos movimiento en su sistema nunca llega a ver el contenido
+      // oculto: la clase ni siquiera se añade, así que no depende de que cargue el JS.
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('js-motion');
+        setTimeout(function () {
+          if (!document.documentElement.dataset.motionReady) {
+            document.documentElement.classList.remove('js-motion');
+          }
+        }, 2000);
+      }
     </script>
   </head>
   <body>
+    <div class="read-progress" data-read-progress aria-hidden="true"></div>
     <a
       href="#contenido"
       class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-accent focus:px-4 focus:py-2 focus:font-medium focus:text-on-accent"

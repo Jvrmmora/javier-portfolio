@@ -12,7 +12,7 @@ const lang = langFromUrl(Astro.url);
   eyebrow={`${services.length} ${t(ui.sections.servicesEyebrow, lang)}`}
   lead={t(ui.sections.servicesLead, lang)}
 >
-  <div class="grid gap-4 md:grid-cols-2">
+  <div class="grid gap-4 md:grid-cols-2" data-reveal-group>
     {
       services.map((s) => (
         <article

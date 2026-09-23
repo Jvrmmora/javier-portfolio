@@ -34,6 +34,7 @@ const lang = langFromUrl(Astro.url);
               <span class="absolute top-0 -left-px h-2 w-px bg-line" aria-hidden="true" />
             )}
             <span
+              data-dot
               class={`absolute top-1 -left-[7px] h-3.5 w-3.5 rounded-full border-2 ${
                 job.current ? 'border-ok bg-ok ring-4 ring-ok/20' : 'border-line bg-bg'
               }`}
