@@ -1,0 +1,52 @@
+---
+// Cloudflare sirve esta página para cualquier ruta que no exista, en los dos idiomas:
+// como no sabe en cuál estaba el visitante, el mensaje va en español e inglés.
+import Base from '../layouts/Base.astro';
+import { profile } from '../data/profile';
+
+const title = `404 — ${profile.name}`;
+---
+
+<Base title={title} description="Página no encontrada">
+  <main class="container-site flex min-h-[80svh] flex-col justify-center py-20">
+    <a
+      href="/"
+      class="mb-12 flex w-fit items-center gap-2.5 rounded-full py-1 pr-3 pl-1 transition-colors hover:bg-surface"
+    >
+      <span
+        class="flex h-9 w-9 items-center justify-center rounded-full bg-[#0a1628] text-[13px] font-extrabold tracking-[-0.02em] text-accent ring-1 ring-line"
+        aria-hidden="true">JM</span
+      >
+      <span class="text-[15px] font-semibold tracking-[-0.01em]">{profile.name}</span>
+    </a>
+
+    <p class="font-display text-[clamp(4rem,14vw,9rem)] leading-none font-bold tracking-[-0.05em] text-accent">
+      404
+    </p>
+
+    <h1 class="mt-6 font-display text-2xl font-semibold tracking-[-0.03em] md:text-4xl">
+      Esta página no existe
+      <span class="mt-1 block text-muted">This page doesn’t exist</span>
+    </h1>
+
+    <p class="mt-6 max-w-[48ch] leading-relaxed text-muted">
+      Puede que el enlace esté mal escrito o que la página haya cambiado de dirección.
+      <span class="mt-1 block">The link may be mistyped, or the page may have moved.</span>
+    </p>
+
+    <div class="mt-10 flex flex-wrap items-center gap-3">
+      <a
+        href="/"
+        class="rounded-lg bg-accent px-6 py-3.5 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
+      >
+        Ir al inicio
+      </a>
+      <a
+        href="/en/"
+        class="rounded-lg border border-line px-6 py-3.5 text-sm transition-colors hover:border-accent-text hover:text-accent-text"
+      >
+        Go to homepage
+      </a>
+    </div>
+  </main>
+</Base>

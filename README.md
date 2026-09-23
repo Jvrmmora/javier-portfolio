@@ -1,43 +1,78 @@
-# Astro Starter Kit: Minimal
+# Javier Montaño — Portafolio
 
-```sh
-npm create astro@latest -- --template minimal
-```
+Sitio personal de **Javier Montaño**, Backend & Cloud Engineer (Bogotá, Colombia).
+Presenta servicios, proyectos, experiencia y formas de contacto, en **español e inglés**.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+> El sitio está construido y listo para desplegar. Cuando esté en línea, la URL va aquí.
 
-## 🚀 Project Structure
+## Cómo está hecho
 
-Inside of your Astro project, you'll see the following folders and files:
+| Pieza | Elección |
+|---|---|
+| Framework | Astro 7 (sitio estático, cero JavaScript por defecto) |
+| Estilos | Tailwind v4 con tokens propios |
+| Tipografía | Inter, auto-hospedada |
+| Movimiento | GSAP + ScrollTrigger, Lenis para el scroll |
+| Logos | simple-icons e iconify, resueltos en tiempo de compilación |
+| Hosting | Cloudflare Workers (assets estáticos) |
+
+## Decisiones que vale la pena mirar
+
+- **Contenido separado de la vista.** Todo el texto vive en `src/data/*.ts` con la forma
+  `{ es, en }`, y los componentes solo lo renderizan. Añadir un proyecto es una entrada en
+  un arreglo, no tocar layout.
+- **Dos idiomas sin framework de i18n.** Español en `/` e inglés en `/en/`, con `hreflang`
+  y descarga del CV en el idioma que se está leyendo. La lógica cabe en
+  [`src/i18n/config.ts`](src/i18n/config.ts).
+- **Modo claro y oscuro reales.** Solo se redefinen tokens; ningún componente decide su
+  color. El tema se resuelve antes de pintar para que no haya destello, y funciona aunque
+  `localStorage` esté bloqueado.
+- **Logos en un solo color.** Varias marcas son casi negras y desaparecerían sobre el fondo
+  navy. Se aplanan a `currentColor` en el build. Lo que no tiene logo real disponible se
+  muestra solo con su nombre: nunca una marca inventada.
+- **El movimiento se apaga, no se atenúa.** Con `prefers-reduced-motion` no hay revelados,
+  ni contadores, ni carrusel automático. El contenido queda completo y estático.
+- **Sin base de datos ni formulario.** El contacto son enlaces directos, así que no hay
+  backend que mantener ni datos de terceros que custodiar.
+
+## Estructura
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+src/
+├── components/   # Secciones y piezas reutilizables (.astro)
+├── data/         # Todo el contenido, bilingüe
+├── i18n/         # Idiomas y textos de interfaz
+├── layouts/      # Documento base: SEO, tema, accesibilidad
+├── lib/          # Resolución de logos en tiempo de compilación
+├── pages/        # / (es), /en/ (en) y 404
+└── styles/       # Tokens y utilidades globales
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Desarrollo
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```sh
+npm install
+npm run dev      # http://localhost:4321
+npm run build    # genera dist/
+npm run preview  # sirve el build
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Despliegue
 
-## 🧞 Commands
+```sh
+npx wrangler login
+npx astro build && npx wrangler deploy
+```
 
-All commands are run from the root of the project, from a terminal:
+La configuración está en [`wrangler.jsonc`](wrangler.jsonc): sirve `dist/` como assets
+estáticos, sin código de servidor.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Accesibilidad
 
-## 👀 Want to learn more?
+Contraste AA verificado en ambos modos, foco visible en todo elemento interactivo,
+navegación completa con teclado (incluido el carrusel, que además se puede pausar) y
+descripciones de imagen en los dos idiomas.
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+---
+
+Código abierto como referencia. El contenido, las imágenes y el CV son © Javier Montaño.

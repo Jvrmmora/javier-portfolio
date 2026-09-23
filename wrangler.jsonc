@@ -8,6 +8,8 @@
   "assets": {
     "directory": "./dist",
     // Sirve /en/ y /en igual, y deja las URL sin barra final.
-    "html_handling": "auto-trailing-slash"
+    "html_handling": "auto-trailing-slash",
+    // Las rutas que no existen reciben la página 404 del sitio, no un error en blanco.
+    "not_found_handling": "404-page"
   }
 }
