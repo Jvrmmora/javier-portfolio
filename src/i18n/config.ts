@@ -34,6 +34,8 @@ export const ui = {
     themeToggle: { es: 'Cambiar tema', en: 'Toggle theme' },
     langSwitch: { es: 'Ver este sitio en inglés', en: 'Ver este sitio en español' },
     home: { es: 'Javier Montaño — inicio', en: 'Javier Montaño — home' },
+    openMenu: { es: 'Abrir menú', en: 'Open menu' },
+    closeMenu: { es: 'Cerrar menú', en: 'Close menu' },
   },
   hero: {
     downloadCv: { es: 'Descargar CV', en: 'Download CV' },
@@ -98,6 +100,8 @@ export const ui = {
     footerBuilt: { es: 'Hecho con Astro y Tailwind', en: 'Built with Astro and Tailwind' },
     footerRights: { es: 'Todos los derechos reservados.', en: 'All rights reserved.' },
     emailCopied: { es: 'Correo copiado', en: 'Email copied' },
+    localTime: { es: 'Hora local en Bogotá', en: 'Local time in Bogotá' },
+    backToTop: { es: 'Volver arriba', en: 'Back to top' },
     contactLead: {
       es: '¿Tienes un proyecto backend, una integración que no cuadra o una migración que da miedo? Escríbeme por el canal que prefieras.',
       en: 'Have a backend project, an integration that will not line up, or a migration that scares you? Reach me on whichever channel you prefer.',

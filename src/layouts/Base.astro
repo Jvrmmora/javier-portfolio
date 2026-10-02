@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import { profile } from '../data/profile';
 import { LANGS, langFromUrl, localizedPath, t, ui } from '../i18n/config';
 
@@ -39,6 +40,11 @@ const canonical = new URL(localizedPath(lang), site);
 
     <meta name="theme-color" content="#0a1628" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    {/* Navegación sin recarga: cambiar de idioma reemplaza la página en sitio, sin
+        pantallazo en blanco. Los scripts de los componentes se reinician con
+        `astro:page-load` (ver src/scripts/page.ts). */}
+    <ClientRouter />
 
     <script
       type="application/ld+json"
@@ -100,5 +106,65 @@ const canonical = new URL(localizedPath(lang), site);
       {t(ui.a11y.skip, lang)}
     </a>
     <slot />
+
+    <script>
+      // Cambio de idioma sin perder el sitio. Las dos versiones tienen las mismas
+      // secciones con los mismos id, pero no la misma altura (el texto mide distinto),
+      // así que no sirve copiar el scroll en píxeles: se guarda QUÉ sección está arriba y
+      // qué fracción de ella ya se recorrió, y se vuelve a ese mismo punto en el otro idioma.
+      type Spot = { id: string; ratio: number };
+      let spot: Spot | null = null;
+
+      const anchors = () => [...document.querySelectorAll<HTMLElement>('header#top, section[id]')];
+
+      document.addEventListener('astro:before-preparation', (event) => {
+        spot = null;
+        if (event.from.pathname === event.to.pathname) return;
+        // La sección activa es la última cuyo borde superior ya pasó bajo la barra.
+        const line = 80;
+        const current = anchors().filter((el) => el.getBoundingClientRect().top <= line).pop();
+        if (!current) return;
+        const rect = current.getBoundingClientRect();
+        spot = { id: current.id, ratio: (line - rect.top) / rect.height };
+      });
+
+      document.addEventListener('astro:before-swap', (event) => {
+        const next = event.newDocument.documentElement;
+        const now = document.documentElement;
+        // El tema lo decide un script del <head> que no se vuelve a ejecutar: se hereda.
+        if (now.dataset.theme) next.dataset.theme = now.dataset.theme;
+        // Sin `js-motion` el contenido llega ya visible: al cambiar de idioma no se
+        // repiten las entradas animadas, la página simplemente aparece traducida.
+        next.dataset.motionReady = 'true';
+      });
+
+      document.addEventListener('astro:after-swap', () => {
+        const target = spot;
+        spot = null;
+        const el = target && document.getElementById(target.id);
+        if (!target || !el) return;
+        const align = () => jumpTo(window.scrollY + el.getBoundingClientRect().top + target.ratio * el.offsetHeight - 80);
+        align();
+
+        // Las imágenes de más arriba aún pueden estar cargando y, al ganar altura, empujan
+        // la sección hacia abajo. Durante un momento se re-alinea con cada cambio de
+        // tamaño, hasta que la persona toque el scroll: desde ahí manda ella.
+        const settle = new ResizeObserver(align);
+        settle.observe(document.body);
+        const release = () => {
+          settle.disconnect();
+          for (const type of ['wheel', 'touchstart', 'keydown'] as const) removeEventListener(type, release);
+        };
+        for (const type of ['wheel', 'touchstart', 'keydown'] as const) addEventListener(type, release, { passive: true });
+        setTimeout(release, 2500);
+      });
+
+      // Lenis lleva su propia cuenta del scroll: si existe, el salto pasa por él.
+      function jumpTo(y: number) {
+        const lenis = (window as { siteLenis?: { scrollTo: (y: number, o: object) => void } }).siteLenis;
+        if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+        else window.scrollTo({ top: y, behavior: 'instant' });
+      }
+    </script>
   </body>
 </html>

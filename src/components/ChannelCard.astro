@@ -1,0 +1,81 @@
+---
+// Tarjeta de canal de contacto. Es un <a> real: funciona sin JS y se recorre con el
+// teclado. En móvil es una fila compacta (icono · texto · flecha); desde 640px pasa a
+// baldosa, con el icono y la flecha arriba y el texto abajo. Lo resuelve una sola
+// rejilla que reubica las tres piezas, sin duplicar marcado.
+import Icon from './Icon.astro';
+
+interface Props {
+  href: string;
+  label: string;
+  note: string;
+  icon: string;
+  /** La acción principal (WhatsApp): va rellena en ámbar, como todo lo que es acción. */
+  featured?: boolean;
+  /** Texto que se copia al portapapeles al pulsar (el correo, que no se muestra). */
+  copy?: string;
+  copiedLabel?: string;
+}
+const { href, label, note, icon, featured = false, copy, copiedLabel } = Astro.props;
+---
+
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  data-copy={copy}
+  data-spotlight
+  class:list={[
+    'channel-card group relative isolate grid grid-cols-[auto_1fr_auto] items-center gap-x-4 overflow-hidden rounded-2xl border p-4',
+    'transition-[transform,border-color,box-shadow,background-color] duration-300 ease-out active:scale-[0.98]',
+    'sm:min-h-[184px] sm:grid-cols-[auto_1fr] sm:grid-rows-[auto_1fr] sm:p-6',
+    'hover:-translate-y-1 focus-visible:-translate-y-1',
+    featured
+      ? 'channel-card--featured border-accent bg-accent text-on-accent hover:shadow-[0_18px_40px_-16px_rgb(245_158_11/0.65)]'
+      : 'border-line bg-bg hover:border-accent-text/60 hover:shadow-[0_18px_40px_-20px_rgb(0_0_0/0.35)]',
+  ]}
+>
+  <span
+    class:list={[
+      'col-start-1 row-start-1 flex h-11 w-11 items-center justify-center rounded-xl transition-[transform,background-color,color] duration-300 group-hover:scale-110 sm:h-12 sm:w-12',
+      featured ? 'bg-on-accent text-accent' : 'border border-line bg-surface text-text group-hover:border-accent group-hover:bg-accent group-hover:text-on-accent',
+    ]}
+  >
+    <Icon name={icon} size={22} />
+  </span>
+
+  <span class="col-start-2 row-start-1 flex min-w-0 flex-col gap-0.5 sm:col-span-2 sm:row-start-2 sm:mt-10 sm:self-end">
+    <span class="font-display text-lg leading-tight font-bold tracking-[-0.02em] sm:text-2xl">{label}</span>
+    <span class:list={['text-[13px] leading-snug sm:text-sm', featured ? 'text-on-accent/75' : 'text-muted']} data-note>
+      {note}
+    </span>
+    {/* Aviso de copiado: ocupa el lugar de la nota, justo donde se hizo clic.
+        `role="status"` lo anuncia en lectores de pantalla. */}
+    {
+      copiedLabel && (
+        <span data-copied role="status" class="hidden items-center gap-1.5 text-[13px] font-semibold text-accent-text sm:text-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m5 13 4 4 10-11" />
+          </svg>
+          {copiedLabel}
+        </span>
+      )
+    }
+  </span>
+
+  {/* La flecha sale por la esquina y entra otra desde abajo: el gesto de "ir hacia allá". */}
+  <span
+    class:list={[
+      'relative col-start-3 row-start-1 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border transition-colors duration-300 sm:col-start-2 sm:justify-self-end',
+      featured ? 'border-on-accent/25 group-hover:bg-on-accent group-hover:text-accent' : 'border-line text-muted group-hover:border-accent-text group-hover:text-accent-text',
+    ]}
+    aria-hidden="true"
+  >
+    <svg class="transition-transform duration-300 ease-out group-hover:translate-x-5 group-hover:-translate-y-5" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 17 17 7M8 7h9v9" />
+    </svg>
+    <svg class="absolute -translate-x-5 translate-y-5 transition-transform duration-300 ease-out group-hover:translate-x-0 group-hover:translate-y-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 17 17 7M8 7h9v9" />
+    </svg>
+  </span>
+</a>

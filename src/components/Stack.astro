@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import Section from './Section.astro';
-import Panel from './Panel.astro';
 import Icon from './Icon.astro';
 import TechChip from './TechChip.astro';
 import { skillGroups, certifications, education } from '../data/skills';
@@ -16,21 +15,40 @@ const lang = langFromUrl(Astro.url);
   eyebrow={t(ui.sections.stackEyebrow, lang)}
   lead={t(ui.sections.stackLead, lang)}
 >
-  <div data-reveal>
-    <Panel bodyClass="divide-y divide-line">
-      {
-        skillGroups.map((g) => (
-          <div class="grid gap-4 px-6 py-6 md:grid-cols-[170px_1fr] md:gap-8 md:px-8">
-            <span class="meta md:pt-2.5">{t(g.label, lang)}</span>
-            <ul class="flex flex-wrap gap-2">
-              {g.items.map((i) => (
-                <TechChip name={i.name} detail={i.detail} size="md" />
-              ))}
-            </ul>
-          </div>
-        ))
-      }
-    </Panel>
+  <!-- Rejilla bento: una tarjeta por categoría, con el mismo lenguaje que las métricas
+       (loseta arriba, hover con foco de luz). Backend, lo principal, ocupa dos columnas;
+       "También" cierra como franja completa porque es lo de menos peso. -->
+  <div class="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3" data-reveal-group>
+    {
+      skillGroups.map((g) => (
+        <article
+          class:list={[
+            'group relative isolate flex flex-col overflow-hidden rounded-2xl border border-line bg-surface/50 p-6 transition-[translate,border-color,background-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-accent-text/40 hover:bg-surface hover:shadow-[0_18px_40px_-20px_rgb(0_0_0/0.35)] md:p-7',
+            g.span === 'wide' && 'md:col-span-2',
+            g.span === 'full' && 'md:col-span-2 lg:col-span-3',
+          ]}
+          data-reveal
+          data-spotlight
+        >
+          <header class="flex items-center gap-3.5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-bg text-text transition-colors duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-on-accent">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d={g.icon} />
+              </svg>
+            </span>
+            <h3 class="font-display text-lg font-semibold tracking-[-0.02em]">{t(g.label, lang)}</h3>
+            {/* Cuántas tecnologías hay en la categoría, en el estilo de un contador de terminal. */}
+            <span class="ml-auto font-mono text-xs text-muted tabular">{String(g.items.length).padStart(2, '0')}</span>
+          </header>
+
+          <ul class="mt-6 flex flex-wrap gap-2">
+            {g.items.map((i) => (
+              <TechChip name={i.name} detail={i.detail} size="md" />
+            ))}
+          </ul>
+        </article>
+      ))
+    }
   </div>
 
   <!-- Formación: sección propia con encabezado, no una nota al pie del stack. -->
@@ -86,3 +104,7 @@ const lang = langFromUrl(Astro.url);
     </ul>
   </div>
 </Section>
+
+<script>
+  import '../scripts/spotlight';
+</script>

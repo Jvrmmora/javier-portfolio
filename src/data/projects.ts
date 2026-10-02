@@ -2,6 +2,8 @@ import type { ImageMetadata } from 'astro';
 import type { L } from '../i18n/config';
 import dashboard from '../assets/ja-manager-dashboard.png';
 import qr from '../assets/ja-manager-qr.png';
+import alexaDesktop from '../assets/alexa-pomodoro-desktop.png';
+import alexaMobile from '../assets/alexa-pomodoro-mobile.png';
 
 export interface Project {
   name: L;
@@ -64,6 +66,43 @@ export const projects: Project[] = [
     ],
   },
   {
+    name: same('Alexa Pomodoro'),
+    meta: { es: 'Skill de voz + panel web', en: 'Voice skill + web dashboard' },
+    year: same('2026'),
+    body: {
+      es: 'Técnica Pomodoro controlada por voz desde un Echo y visualizada en un panel web. Un skill de Alexa propio (endpoint HTTPS firmado, sin AWS Lambda ni DynamoDB) que crea timers nativos y guarda todo el estado en MongoDB.',
+      en: 'Pomodoro technique controlled by voice from an Echo and visualised on a web dashboard. A custom Alexa skill (signed HTTPS endpoint, no AWS Lambda or DynamoDB) that creates native timers and keeps all state in MongoDB.',
+    },
+    stack: ['Next.js', 'TypeScript', 'MongoDB', 'Alexa Skills Kit', 'Vercel', 'CI/CD'],
+    href: 'https://alexa-pomodoro.vercel.app',
+    repo: 'https://github.com/Jvrmmora/alexa-pomodoro',
+    featured: true,
+    highlights: [
+      { es: 'Control por voz desde un Echo', en: 'Voice control from an Echo' },
+      { es: 'Timers nativos de Alexa', en: 'Native Alexa timers' },
+      { es: 'Cuenta regresiva y ciclo de 4 focos', en: 'Countdown and 4-focus cycle' },
+      { es: 'Historial y gráfica semanal', en: 'History and weekly chart' },
+    ],
+    screenshots: [
+      {
+        src: alexaDesktop,
+        alt: {
+          es: 'Panel de Alexa Pomodoro en escritorio: cuenta regresiva de un foco en curso, métricas del día y gráfica semanal',
+          en: 'Alexa Pomodoro desktop dashboard: countdown of a running focus block, daily metrics and weekly chart',
+        },
+        caption: { es: 'Panel web con el bloque activo', en: 'Web dashboard with the active block' },
+      },
+      {
+        src: alexaMobile,
+        alt: {
+          es: 'Panel de Alexa Pomodoro en móvil con la cuenta regresiva, métricas, gráfica semanal e historial del día',
+          en: 'Alexa Pomodoro mobile dashboard with the countdown, metrics, weekly chart and today’s history',
+        },
+        caption: { es: 'Versión móvil', en: 'Mobile view' },
+      },
+    ],
+  },
+  {
     name: same('Organization Manager'),
     meta: {
       es: 'Stanley Black & Decker, vía Tres Pi Medios',
@@ -88,40 +127,5 @@ export const projects: Project[] = [
     stack: ['Node.js', 'Express', 'MongoDB', 'JWT'],
     href: null,
     repo: 'https://github.com/Jvrmmora/jamomoplan',
-  },
-  {
-    name: { es: 'Automatización de WhatsApp', en: 'WhatsApp automation' },
-    meta: { es: 'Herramienta interna', en: 'Internal tool' },
-    year: same('2025'),
-    body: {
-      es: 'Automatización de envío masivo con sesión persistente, validación internacional de números y reporte de entrega por destinatario.',
-      en: 'Bulk-messaging automation with a persistent session, international number validation and per-recipient delivery reports.',
-    },
-    stack: ['Node.js', 'Playwright'],
-    href: null,
-  },
-  {
-    name: same('Tres Pi Talks'),
-    meta: { es: 'Landing de marca', en: 'Brand landing page' },
-    year: same('2025'),
-    body: {
-      es: 'Sitio estático para la iniciativa de charlas técnicas de Tres Pi, con componentes propios y foco en rendimiento.',
-      en: 'Static site for Tres Pi’s tech talks initiative, with custom components and a focus on performance.',
-    },
-    stack: ['Astro', 'TypeScript'],
-    href: null,
-    repo: 'https://github.com/Jvrmmora/Astro-Tres-Pi-Talk',
-  },
-  {
-    name: { es: 'Encuesta de higiene del sueño', en: 'Sleep hygiene quiz' },
-    meta: { es: 'Herramienta desplegada', en: 'Deployed tool' },
-    year: same('2025'),
-    body: {
-      es: 'Cuestionario interactivo con puntuación automática e interpretación personalizada. Funciona sin conexión.',
-      en: 'Interactive questionnaire with automatic scoring and personalised interpretation. Works offline.',
-    },
-    stack: ['HTML', 'CSS', 'JavaScript', 'Azure'],
-    href: null,
-    repo: 'https://github.com/Jvrmmora/sleep-quiz',
   },
 ];

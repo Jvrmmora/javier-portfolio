@@ -74,7 +74,7 @@ export const metrics = [
   {
     title: { es: 'Rendimiento', en: 'Performance' } as L,
     count: 80,
-    prefix: '-',
+    prefix: '−', // signo menos tipográfico (U+2212): el guion se ve corto junto a las cifras
     suffix: '%',
     unit: { es: '', en: '' } as L,
     label: {
@@ -121,6 +121,7 @@ export const getChannels = (lang: Lang) =>
       icon: 'whatsapp',
       handle: profile.phone,
       href: `https://wa.me/573057046717?text=${WHATSAPP_TEXT[lang]}`,
+      note: lang === 'es' ? 'Escríbeme directo al chat' : 'Message me directly',
       primary: true,
     },
     {
@@ -129,18 +130,21 @@ export const getChannels = (lang: Lang) =>
       handle: profile.email,
       href: `mailto:${profile.email}?subject=${MAIL_SUBJECT[lang]}`,
       copy: profile.email,
+      note: lang === 'es' ? 'Copia la dirección y abre tu correo' : 'Copies the address and opens your mail app',
     },
     {
       name: 'LinkedIn',
       icon: 'linkedin',
       handle: 'in/jvrmmora',
       href: 'https://linkedin.com/in/jvrmmora',
+      note: lang === 'es' ? 'Perfil y trayectoria' : 'Profile and background',
     },
     {
       name: 'GitHub',
       icon: 'github',
       handle: 'Jvrmmora',
       href: 'https://github.com/Jvrmmora',
+      note: lang === 'es' ? 'Código y proyectos' : 'Code and projects',
     },
   ] as const;
 

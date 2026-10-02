@@ -4,46 +4,51 @@ import { profile, heroCard, getChannels, cvHref } from '../data/profile';
 import { langFromUrl, t, ui } from '../i18n/config';
 import portrait from '../assets/javier.jpg';
 import RevealText from './RevealText.astro';
+import Icon from './Icon.astro';
 
 const lang = langFromUrl(Astro.url);
-const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
+const channels = getChannels(lang);
+const whatsapp = channels.find((c) => 'primary' in c && c.primary)!;
+// Perfiles que un reclutador abre de inmediato: van como botones de icono junto al CV.
+const profiles = channels.filter((c) => c.icon === 'linkedin' || c.icon === 'github');
 ---
 
 <header id="top" class="container-site pt-14 pb-16 md:pt-20 md:pb-24">
-  <div class="grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
-    <div class="min-w-0 lg:col-span-7">
+  <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-x-16">
+    <div class="min-w-0">
       <p class="meta mb-6 flex items-center gap-2.5" data-hero-step>
         {/* Late como un indicador de servicio activo. `motion-safe` lo apaga para
             quien pide menos movimiento en su sistema. */}
         <span class="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
-          <span class="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 motion-safe:animate-ping"></span>
-          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-ok"></span>
+          <span class="absolute inline-flex h-full w-full rounded-full bg-accent opacity-75 motion-safe:animate-ping"></span>
+          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent"></span>
         </span>
         {t(profile.availability, lang)}
       </p>
 
-      <h1 class="font-display text-[clamp(2.5rem,8vw,5.25rem)] leading-[1.02] font-bold tracking-[-0.04em]">
+      <h1 class="font-display text-[clamp(2.5rem,7vw,8rem)] leading-[1.0] font-bold tracking-[-0.045em]">
         <RevealText text="Javier" as="span" class="block" immediate />
         <RevealText text="Montaño" as="span" class="block" immediate />
       </h1>
 
-      {/* El cargo es lo segundo que se lee tras el nombre: va grande y en negrita,
-          con una barra verde que lo ancla al titular. */}
-      <p class="mt-5 flex items-center gap-3 text-xl font-bold tracking-[-0.02em] text-ok md:text-2xl" data-hero-step>
-        <span class="h-6 w-1 shrink-0 rounded-full bg-ok md:h-7" aria-hidden="true"></span>
+      {/* El cargo es lo segundo que se lee tras el nombre: va grande, en negrita y en ámbar,
+          el color de marca, con una barra que lo ancla al titular. Como texto usa
+          `accent-text`, que en modo claro se oscurece para mantener el contraste AA. */}
+      <p class="mt-5 flex items-center gap-3 text-xl font-bold tracking-[-0.02em] text-accent-text md:text-2xl 2xl:text-3xl" data-hero-step>
+        <span class="h-6 w-1 shrink-0 rounded-full bg-accent md:h-7 2xl:h-8" aria-hidden="true"></span>
         {t(profile.role, lang)}
       </p>
 
-      <p class="mt-7 max-w-[50ch] text-lg leading-relaxed text-muted" data-hero-step>
+      <p class="mt-7 max-w-[50ch] text-lg leading-relaxed text-muted 2xl:max-w-[54ch] 2xl:text-xl" data-hero-step>
         {t(profile.tagline, lang)}
       </p>
 
-      <div class="mt-10 flex flex-wrap items-center gap-3" data-hero-step>
+      <div class="mt-10 flex flex-wrap items-center gap-3 sm:gap-4" data-hero-step>
         <a
           href={whatsapp.href}
           target="_blank"
           rel="noopener noreferrer"
-          class="rounded-lg bg-accent px-6 py-3.5 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
+          class="w-full rounded-lg bg-accent px-6 py-3.5 text-center text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 sm:w-auto"
         >
           {t(ui.hero.whatsapp, lang)}
         </a>
@@ -52,7 +57,7 @@ const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
         <a
           href={cvHref(lang)}
           download={`CV Javier Montaño (${lang.toUpperCase()}).pdf`}
-          class="inline-flex items-center gap-2 rounded-lg border border-line px-6 py-3.5 text-sm transition-colors hover:border-accent-text hover:text-accent-text"
+          class="inline-flex min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-line px-4 py-3.5 text-sm transition-colors sm:flex-none sm:px-6 hover:border-accent-text hover:text-accent-text"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
@@ -60,13 +65,31 @@ const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
           {t(ui.hero.downloadCv, lang)}
           <span class="text-muted">· {lang.toUpperCase()}</span>
         </a>
+        {/* Solo el logo, sin borde: la caja de 50px (el alto del botón del CV) se mantiene
+            invisible para que el área de toque siga siendo cómoda, y se ilumina al pasar. */}
+        {profiles.map((c) => (
+          <a
+            href={c.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={c.name}
+            title={c.name}
+            class="inline-flex h-[50px] w-[50px] shrink-0 sm:h-[50px] items-center justify-center rounded-lg text-text transition-colors hover:bg-surface hover:text-accent-text"
+          >
+            <Icon name={c.icon} size={26} />
+          </a>
+        ))}
       </div>
     </div>
 
-    <!-- Retrato vertical 4:5; la tarjeta cuelga bajo el borde inferior para no tapar la cara
-         (y de paso cubre el logo del buso). Tarjeta superpuesta: modalidad, ubicación/horario e idiomas,
+    <!-- Dos columnas iguales y la foto al inicio de la suya: así el hueco entre texto y
+         foto se parece al margen derecho, en vez de acumularse todo en el centro.
+         Retrato vertical 4:5; la tarjeta va sobre la parte baja de la foto, lejos de la cara
+         (y de paso cubre el logo del buso). En escritorio queda DENTRO del borde inferior:
+         la foto ya llega casi al pie de la pantalla, y colgando por debajo el último
+         ítem se salía de la vista. Tarjeta superpuesta: modalidad, ubicación/horario e idiomas,
          lo único que un reclutador o cliente pregunta y no está ya en la página. -->
-    <aside class="relative min-w-0 lg:col-span-5 lg:pl-6" data-hero-step aria-label={t(ui.hero.profile, lang)}>
+    <aside class="relative w-full min-w-0 lg:max-w-[640px] lg:justify-self-start" data-hero-step aria-label={t(ui.hero.profile, lang)}>
       {/* El contenedor recorta; la imagen de dentro es la que se acerca y hace paralaje. */}
       <div class="overflow-hidden rounded-3xl">
       <Image
@@ -74,7 +97,7 @@ const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
         src={portrait}
         alt={lang === 'es' ? 'Retrato de Javier Montaño sonriendo' : 'Portrait of Javier Montaño smiling'}
         widths={[480, 800, 1000]}
-        sizes="(min-width: 1024px) 400px, calc(100vw - 32px)"
+        sizes="(min-width: 1024px) 640px, calc(100vw - 32px)"
         loading="eager"
         fetchpriority="high"
         class="aspect-[4/5] w-full object-cover object-[50%_22%]"
@@ -82,7 +105,7 @@ const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
       </div>
 
       <div
-        class="relative mx-4 -mt-24 rounded-2xl border border-line bg-surface/95 p-5 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.35)] backdrop-blur-md sm:mx-6 lg:absolute lg:-bottom-8 lg:-left-8 lg:mx-0 lg:mt-0 lg:w-[320px]"
+        class="relative mx-4 -mt-24 rounded-2xl border border-line bg-surface/95 p-5 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.35)] backdrop-blur-md sm:mx-6 lg:absolute lg:bottom-6 lg:-left-8 lg:mx-0 lg:mt-0 lg:w-[320px]"
       >
         <dl class="flex flex-col divide-y divide-line">
           {

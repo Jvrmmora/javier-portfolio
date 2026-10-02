@@ -18,41 +18,56 @@ const fmt = (n: number) => n.toLocaleString(locale);
     {
       metrics.map((m) => (
         <div
-          class="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-surface/50 p-6 transition duration-300 hover:-translate-y-0.5 hover:border-accent-text/40 hover:bg-surface"
+          class="@container group relative isolate flex flex-col overflow-hidden rounded-2xl border border-line bg-surface/50 p-6 transition-[translate,border-color,background-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-accent-text/40 hover:bg-surface hover:shadow-[0_18px_40px_-20px_rgb(0_0_0/0.35)] md:p-7"
           data-reveal
+          data-spotlight
         >
-          <p class="meta">{t(m.title, lang)}</p>
+          {/* Arriba, el rótulo a la izquierda y con qué se logró a la derecha: los logos
+              en losetas del mismo tamaño, para que una tarjeta con uno y otra con dos
+              se vean igual de completas. Al pasar el ratón se encienden en ámbar. */}
+          <div class="flex items-start justify-between gap-4">
+            <p class="meta pt-2.5">{t(m.title, lang)}</p>
+            <ul class="flex shrink-0 gap-1.5">
+              {m.logos.map((name, i) => (
+                <li
+                  title={name}
+                  class="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-bg text-text transition-colors duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-on-accent"
+                  style={`transition-delay: ${i * 60}ms`}
+                >
+                  <Icon name={name} size={20} />
+                </li>
+              ))}
+              {'icon' in m && (
+                <li class="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-bg text-text transition-colors duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-on-accent">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
+                    <path d={m.icon} />
+                  </svg>
+                </li>
+              )}
+            </ul>
+          </div>
 
-          <p class="font-display tabular mt-4 text-4xl leading-none font-semibold tracking-[-0.03em] md:text-[2.75rem]">
+          {/* El tamaño sale del ancho de la propia tarjeta (cqi), no de la pantalla: así
+              "200.000+" llena su tarjeta sin desbordarla en ningún ancho. */}
+          <p class="font-display tabular mt-7 md:mt-10 text-[clamp(2.25rem,19cqi,3.75rem)] leading-none font-semibold tracking-[-0.04em] whitespace-nowrap">
             {'prefix' in m && m.prefix}
             <span data-count={m.count} data-count-locale={locale}>{fmt(m.count)}</span>
             {m.suffix}
             {t(m.unit, lang) && (
-              <span class="ml-1.5 text-lg font-normal text-muted">{t(m.unit, lang)}</span>
+              <span class="ml-1 text-[0.4em] font-medium tracking-[-0.01em] text-muted">{t(m.unit, lang)}</span>
             )}
           </p>
 
           {/* Subrayado ámbar que crece al entrar: marca el dato sin añadir otro color. */}
-          <span class="mt-4 block h-px w-10 origin-left bg-accent" data-bar />
+          <span class="mt-5 block h-0.5 w-10 origin-left rounded-full bg-accent" data-bar />
 
-          <p class="mt-4 flex-1 text-sm leading-relaxed text-muted">{t(m.label, lang)}</p>
-
-          <ul class="mt-5 flex h-5 items-center gap-2.5 text-muted transition-colors group-hover:text-text">
-            {m.logos.map((name) => (
-              <li title={name}>
-                <Icon name={name} size={20} />
-              </li>
-            ))}
-            {'icon' in m && (
-              <li>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
-                  <path d={m.icon} />
-                </svg>
-              </li>
-            )}
-          </ul>
+          <p class="mt-4 text-[15px] leading-relaxed text-muted">{t(m.label, lang)}</p>
         </div>
       ))
     }
   </div>
 </section>
+
+<script>
+  import '../scripts/spotlight';
+</script>

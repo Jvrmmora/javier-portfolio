@@ -10,7 +10,7 @@ import { langFromUrl, t, ui } from '../i18n/config';
 const lang = langFromUrl(Astro.url);
 const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
 
-const featured = projects.find((p) => p.featured)!;
+const featuredList = projects.filter((p) => p.featured);
 const rest = projects.filter((p) => !p.featured);
 ---
 
@@ -22,8 +22,10 @@ const rest = projects.filter((p) => !p.featured);
   lead={t(ui.sections.projectsLead, lang)}
   bare
 >
+  {featuredList.map((featured, i) => (
+  <>
   <!-- Destacado: banda a ancho completo, con más peso que todo lo demás. -->
-  <div class="border-y border-line bg-surface" data-reveal>
+  <div class:list={['border-line', i === 0 ? 'border-y bg-surface' : 'border-b']} data-reveal>
     <div class="container-site py-14 md:py-24">
       <div class="grid gap-12 lg:grid-cols-12 lg:gap-16">
         <div class="lg:col-span-7">
@@ -86,17 +88,20 @@ const rest = projects.filter((p) => !p.featured);
         </div>
       </div>
 
-      <!-- Columnas 2.35 : 1 = proporción de las dos capturas, así miden lo mismo sin recortar. -->
+      <!-- El alto de la fila se limita a ~560px (`--maxw`): una captura vertical alta no domina la banda. Cada columna pesa lo que la proporción de su captura: todas miden lo mismo de alto sin recortar. -->
       {featured.screenshots && (
-        <div class="mt-14 grid gap-4 md:mt-20 lg:grid-cols-[2.35fr_1fr]">
-          {featured.screenshots.map((shot, i) => (
+        <div
+          class="mt-14 grid max-w-[var(--maxw)] gap-4 md:mt-20 lg:[grid-template-columns:var(--cols)]"
+          style={`--cols:${featured.screenshots.map((s) => (s.src.width / s.src.height).toFixed(3) + 'fr').join(' ')};--maxw:${Math.round(featured.screenshots.reduce((n, s) => n + s.src.width / s.src.height, 0) * 560 + 16 * (featured.screenshots.length - 1))}px`}
+        >
+          {featured.screenshots.map((shot, j) => (
             <figure>
               <div class="overflow-hidden rounded-xl border border-line bg-bg">
                 <Image
                   src={shot.src}
                   alt={t(shot.alt, lang)}
                   widths={[480, 800, 1200]}
-                  sizes={i === 0 ? '(min-width: 1024px) 730px, calc(100vw - 32px)' : '(min-width: 1024px) 315px, calc(100vw - 32px)'}
+                  sizes={j === 0 ? '(min-width: 1024px) 730px, calc(100vw - 32px)' : '(min-width: 1024px) 315px, calc(100vw - 32px)'}
                   class="h-auto w-full"
                 />
               </div>
@@ -107,6 +112,8 @@ const rest = projects.filter((p) => !p.featured);
       )}
     </div>
   </div>
+  </>
+  ))}
 
   <!-- Más proyectos: carrusel horizontal clásico. No secuestra el scroll vertical de la
        página (el patrón que más molesta); se mueve con el dedo, con las flechas, con la
@@ -284,164 +291,168 @@ const rest = projects.filter((p) => !p.featured);
   }
 
   /* El carrusel va a todo el ancho, pero su relleno lateral iguala el margen del
-     contenido (contenedor de 1120px + 2rem), así la primera tarjeta queda alineada
+     contenido (mismas variables que .container-site), así la primera tarjeta queda alineada
      con el título. `scroll-padding` hace que el imán del carrusel respete ese margen;
      sin él, la primera tarjeta se pega al borde al soltar el dedo.
      Se usa 100% y no 100vw para no contar el ancho de la barra de desplazamiento. */
   .track {
-    padding-inline: 1rem;
-    scroll-padding-inline: 1rem;
-  }
-
-  @media (min-width: 768px) {
-    .track {
-      padding-inline: max(2rem, calc((100% - var(--site-max)) / 2 + 2rem));
-      scroll-padding-inline: max(2rem, calc((100% - var(--site-max)) / 2 + 2rem));
-    }
+    padding-inline: calc(max(0px, (100% - var(--site-max)) / 2) + var(--gutter));
+    scroll-padding-inline: calc(max(0px, (100% - var(--site-max)) / 2) + var(--gutter));
   }
 </style>
 
 <script>
-  const track = document.querySelector<HTMLElement>('[data-track]');
-  const bar = document.querySelector<HTMLElement>('[data-track-progress]');
-  const prev = document.querySelector<HTMLButtonElement>('[data-track-prev]');
-  const next = document.querySelector<HTMLButtonElement>('[data-track-next]');
-  const toggle = document.querySelector<HTMLButtonElement>('[data-track-toggle]');
-  const iconPause = toggle?.querySelector<HTMLElement>('[data-icon-pause]');
-  const iconPlay = toggle?.querySelector<HTMLElement>('[data-icon-play]');
+  import { onPage } from '../scripts/page';
 
-  if (track) {
-    const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const SPEED = 34; // píxeles por segundo: lento, para poder leer mientras pasa
+  onPage((signal) => {
+    const track = document.querySelector<HTMLElement>('[data-track]');
+    const bar = document.querySelector<HTMLElement>('[data-track-progress]');
+    const prev = document.querySelector<HTMLButtonElement>('[data-track-prev]');
+    const next = document.querySelector<HTMLButtonElement>('[data-track-next]');
+    const toggle = document.querySelector<HTMLButtonElement>('[data-track-toggle]');
+    const iconPause = toggle?.querySelector<HTMLElement>('[data-icon-pause]');
+    const iconPlay = toggle?.querySelector<HTMLElement>('[data-icon-play]');
 
-    // El bucle sin costura necesita una segunda copia de las tarjetas: cuando la pista
-    // llega al final del primer juego, se resta ese ancho y el salto es invisible porque
-    // lo que se ve en ese punto es idéntico. Las copias son decorativas: no se anuncian
-    // en lectores de pantalla ni reciben foco con el tabulador.
-    const originals = [...track.children] as HTMLElement[];
-    let loopWidth = 0;
+    if (track) {
+      const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const SPEED = 34; // píxeles por segundo: lento, para poder leer mientras pasa
 
-    const buildClones = () => {
-      track.querySelectorAll('[data-clone]').forEach((el) => el.remove());
-      if (calm.matches) return;
-      for (const node of originals) {
-        const copy = node.cloneNode(true) as HTMLElement;
-        copy.dataset.clone = '';
-        copy.setAttribute('aria-hidden', 'true');
-        copy.querySelectorAll('a, button').forEach((el) => el.setAttribute('tabindex', '-1'));
-        track.append(copy);
-      }
-      const last = originals[originals.length - 1];
-      loopWidth = last.offsetLeft + last.offsetWidth - originals[0].offsetLeft + 16; // 16 = gap
-    };
+      // El bucle sin costura necesita una segunda copia de las tarjetas: cuando la pista
+      // llega al final del primer juego, se resta ese ancho y el salto es invisible porque
+      // lo que se ve en ese punto es idéntico. Las copias son decorativas: no se anuncian
+      // en lectores de pantalla ni reciben foco con el tabulador.
+      const originals = [...track.children] as HTMLElement[];
+      let loopWidth = 0;
 
-    const step = () => {
-      const first = originals[0];
-      const second = originals[1];
-      if (!first) return track.clientWidth;
-      return second ? second.offsetLeft - first.offsetLeft : first.offsetWidth;
-    };
+      const buildClones = () => {
+        track.querySelectorAll('[data-clone]').forEach((el) => el.remove());
+        if (calm.matches) return;
+        for (const node of originals) {
+          const copy = node.cloneNode(true) as HTMLElement;
+          copy.dataset.clone = '';
+          copy.setAttribute('aria-hidden', 'true');
+          copy.querySelectorAll('a, button').forEach((el) => el.setAttribute('tabindex', '-1'));
+          track.append(copy);
+        }
+        const last = originals[originals.length - 1];
+        loopWidth = last.offsetLeft + last.offsetWidth - originals[0].offsetLeft + 16; // 16 = gap
+      };
 
-    const paint = () => {
-      if (!bar) return;
-      const span = loopWidth || track.scrollWidth - track.clientWidth;
-      const pos = span > 0 ? (track.scrollLeft % span) / span : 0;
-      bar.style.transform = `scaleX(${pos})`;
-    };
+      const step = () => {
+        const first = originals[0];
+        const second = originals[1];
+        if (!first) return track.clientWidth;
+        return second ? second.offsetLeft - first.offsetLeft : first.offsetWidth;
+      };
 
-    track.addEventListener('scroll', paint, { passive: true });
+      const paint = () => {
+        if (!bar) return;
+        const span = loopWidth || track.scrollWidth - track.clientWidth;
+        const pos = span > 0 ? (track.scrollLeft % span) / span : 0;
+        bar.style.transform = `scaleX(${pos})`;
+      };
 
-    // ---- Movimiento continuo ------------------------------------------------
-    // Se avanza por tiempo transcurrido, no por fotograma, así la velocidad es la misma
-    // en una pantalla de 60 Hz que en una de 120 Hz.
-    let raf = 0;
-    let last = 0;
-    // La posición se lleva aparte con decimales: `scrollLeft` redondea a píxeles enteros
-    // y, al sumar sobre el valor ya redondeado, el error se acumula y el carrusel se
-    // acelera (medido: casi el doble de la velocidad pedida).
-    let pos = 0;
-    let applied = 0;
-    let paused = false; // pausa pedida por la persona: manda sobre lo demás
-    let visible = false;
-    let held = false; // el puntero encima, el dedo en la pista o el foco dentro
+      track.addEventListener('scroll', paint, { passive: true });
 
-    const frame = (now: number) => {
-      const delta = last ? (now - last) / 1000 : 0;
-      last = now;
-      // Si la posición cambió por fuera (rueda, dedo, flechas), se adopta esa.
-      if (Math.abs(track.scrollLeft - applied) > 2) pos = track.scrollLeft;
-      pos += SPEED * Math.min(delta, 0.05); // el tope evita un salto al volver de otra pestaña
-      if (loopWidth > 0 && pos >= loopWidth) pos -= loopWidth;
-      track.scrollLeft = pos;
-      applied = track.scrollLeft;
-      raf = requestAnimationFrame(frame);
-    };
+      // ---- Movimiento continuo ------------------------------------------------
+      // Se avanza por tiempo transcurrido, no por fotograma, así la velocidad es la misma
+      // en una pantalla de 60 Hz que en una de 120 Hz.
+      let raf = 0;
+      let last = 0;
+      // La posición se lleva aparte con decimales: `scrollLeft` redondea a píxeles enteros
+      // y, al sumar sobre el valor ya redondeado, el error se acumula y el carrusel se
+      // acelera (medido: casi el doble de la velocidad pedida).
+      let pos = 0;
+      let applied = 0;
+      let paused = false; // pausa pedida por la persona: manda sobre lo demás
+      let visible = false;
+      let held = false; // el puntero encima, el dedo en la pista o el foco dentro
 
-    const stop = () => {
-      cancelAnimationFrame(raf);
-      raf = 0;
-      last = 0;
-      pos = track.scrollLeft;
-    };
+      const frame = (now: number) => {
+        const delta = last ? (now - last) / 1000 : 0;
+        last = now;
+        // Si la posición cambió por fuera (rueda, dedo, flechas), se adopta esa.
+        if (Math.abs(track.scrollLeft - applied) > 2) pos = track.scrollLeft;
+        pos += SPEED * Math.min(delta, 0.05); // el tope evita un salto al volver de otra pestaña
+        if (loopWidth > 0 && pos >= loopWidth) pos -= loopWidth;
+        track.scrollLeft = pos;
+        applied = track.scrollLeft;
+        raf = requestAnimationFrame(frame);
+      };
 
-    const start = () => {
-      stop();
-      if (paused || held || !visible || calm.matches || loopWidth <= 0) return;
-      raf = requestAnimationFrame(frame);
-    };
+      const stop = () => {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        last = 0;
+        pos = track.scrollLeft;
+      };
 
-    const hold = (value: boolean) => {
-      held = value;
-      start();
-    };
+      const start = () => {
+        stop();
+        if (paused || held || !visible || calm.matches || loopWidth <= 0) return;
+        raf = requestAnimationFrame(frame);
+      };
 
-    // Las flechas mueven una tarjeta y el movimiento continúa después.
-    const move = (dir: number) => {
-      stop();
-      const target = track.scrollLeft + dir * step();
-      track.scrollTo({ left: target < 0 && loopWidth > 0 ? target + loopWidth : target, behavior: 'smooth' });
-      window.setTimeout(start, 500);
-    };
-    prev?.addEventListener('click', () => move(-1));
-    next?.addEventListener('click', () => move(1));
-
-    const setPaused = (value: boolean) => {
-      paused = value;
-      iconPause?.classList.toggle('hidden', value);
-      iconPlay?.classList.toggle('hidden', !value);
-      toggle?.setAttribute('aria-label', (value ? toggle.dataset.labelPlay : toggle.dataset.labelPause) ?? '');
-      start();
-    };
-    toggle?.addEventListener('click', () => setPaused(!paused));
-
-    // Se detiene mientras alguien lo mira, lo toca o navega con el teclado dentro.
-    for (const event of ['pointerenter', 'focusin', 'touchstart'] as const) {
-      track.addEventListener(event, () => hold(true), { passive: true });
-    }
-    for (const event of ['pointerleave', 'focusout', 'touchend'] as const) {
-      track.addEventListener(event, () => hold(false), { passive: true });
-    }
-
-    new IntersectionObserver(
-      ([entry]) => {
-        visible = entry.isIntersecting;
+      const hold = (value: boolean) => {
+        held = value;
         start();
-      },
-      { threshold: 0.2 },
-    ).observe(track);
+      };
 
-    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+      // Las flechas mueven una tarjeta y el movimiento continúa después.
+      const move = (dir: number) => {
+        stop();
+        const target = track.scrollLeft + dir * step();
+        track.scrollTo({ left: target < 0 && loopWidth > 0 ? target + loopWidth : target, behavior: 'smooth' });
+        window.setTimeout(start, 500);
+      };
+      prev?.addEventListener('click', () => move(-1));
+      next?.addEventListener('click', () => move(1));
 
-    const rebuild = () => {
-      stop();
-      track.scrollLeft = 0;
-      buildClones();
-      toggle?.classList.toggle('hidden', calm.matches);
-      paint();
-      start();
-    };
-    calm.addEventListener('change', rebuild);
-    window.addEventListener('resize', rebuild);
-    rebuild();
-  }
+      const setPaused = (value: boolean) => {
+        paused = value;
+        iconPause?.classList.toggle('hidden', value);
+        iconPlay?.classList.toggle('hidden', !value);
+        toggle?.setAttribute('aria-label', (value ? toggle.dataset.labelPlay : toggle.dataset.labelPause) ?? '');
+        start();
+      };
+      toggle?.addEventListener('click', () => setPaused(!paused));
+
+      // Se detiene mientras alguien lo mira, lo toca o navega con el teclado dentro.
+      for (const event of ['pointerenter', 'focusin', 'touchstart'] as const) {
+        track.addEventListener(event, () => hold(true), { passive: true });
+      }
+      for (const event of ['pointerleave', 'focusout', 'touchend'] as const) {
+        track.addEventListener(event, () => hold(false), { passive: true });
+      }
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          visible = entry.isIntersecting;
+          start();
+        },
+        { threshold: 0.2 },
+      );
+      observer.observe(track);
+
+      document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()), { signal });
+
+      const rebuild = () => {
+        stop();
+        track.scrollLeft = 0;
+        buildClones();
+        toggle?.classList.toggle('hidden', calm.matches);
+        paint();
+        start();
+      };
+      calm.addEventListener('change', rebuild, { signal });
+      window.addEventListener('resize', rebuild, { signal });
+      rebuild();
+
+      // Al salir de la página el bucle se apaga: si no, seguiría moviendo una pista que ya no existe.
+      signal.addEventListener('abort', () => {
+        stop();
+        observer.disconnect();
+      });
+    }
+  });
 </script>

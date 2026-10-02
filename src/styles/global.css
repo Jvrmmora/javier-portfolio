@@ -5,10 +5,10 @@
 @import '@fontsource-variable/geist-mono';
 
 @theme {
-  /* Paleta navy + ámbar, con dos reglas de uso que dan significado a cada color:
-     - ámbar = ACCIÓN. Solo CTA, hover y foco. Si aparece en texto decorativo
-       deja de significar "esto se puede clicar".
-     - verde = ESTADO DEL SISTEMA. Solo status, método HTTP y diffs. Nunca es clicable. */
+  /* Paleta de dos colores: navy de fondo y ámbar como único color de acento.
+     Decisión de Javier (2026-09-29): nada de verde. El token `ok` se conserva porque
+     varios componentes lo usan para estado (disponible, actual, 200 OK, copiado),
+     pero ahora vale ámbar: cambiarlo aquí cambia todo el sitio a la vez. */
   --color-bg: #0a1628;
   --color-surface: #10203a;
   --color-bar: #0d1b32;
@@ -19,7 +19,7 @@
   --color-accent: #f59e0b; /* relleno de botones */
   --color-accent-text: #f59e0b; /* ámbar cuando se usa como texto o borde */
   --color-on-accent: #0a1628; /* tinta sobre un relleno ámbar */
-  --color-ok: #34d399;
+  --color-ok: #f59e0b;
   --color-line: #1e3151;
 
   /* Inter es la alternativa libre más cercana a SF Pro. En Apple se usa la del sistema
@@ -33,51 +33,146 @@
 /* Modo claro. Solo se redefinen los tokens: ningún componente decide su color.
    El ámbar como RELLENO no cambia (tinta navy encima: 8.4:1); como TEXTO se oscurece,
    porque #f59e0b sobre fondo claro no llega ni a 2:1.
-   Contrastes medidos sobre bg: text 16.8, muted 6.2, accent-text 4.6, ok 5.1.
+   Contrastes medidos sobre bg: text 16.8, muted 6.2, accent-text 4.6, ok 4.6.
    Todos superan AA (4.5:1). Los bordes (--color-line) son decorativos: no llevan
    información por sí solos, el texto de cada control ya cumple. */
 :root[data-theme='light'] {
   --color-bg: #f4f6fa;
   --color-surface: #ffffff;
   --color-bar: #e9eef5;
-  --color-footer: #e4eaf4;
+  --color-footer: #ffffff; /* la hoja del cierre: blanca sobre el fondo gris azulado */
   --color-text: #0a1628;
   --color-muted: #4a5d78;
   --color-accent-text: #b45309;
-  --color-ok: #047857;
+  --color-ok: #b45309; /* el ámbar oscuro de `accent-text`: legible como texto en claro */
   --color-line: #d3dce8;
 }
 
-/* Ancho del contenido. Crece en pantallas grandes para no dejar franjas vacías, pero
-   no tanto que las líneas de texto se vuelvan incómodas de leer. Todo el sitio lo usa,
-   incluido el margen del carrusel, así que cambiarlo aquí lo cambia en todas partes. */
+/* Ancho del contenido: ocupa la pantalla. El margen lateral crece con ella (de 16px en
+   un teléfono a 72px en un monitor), así nunca queda pegado al borde ni con franjas
+   vacías. El tope de 1920px solo evita que en pantallas 4K todo se estire sin fin.
+   La legibilidad no depende de este ancho: cada párrafo largo lleva su propio límite
+   en caracteres (max-w-[..ch]), porque una línea de texto de lado a lado no se lee.
+   El carrusel usa estas mismas dos variables para alinear su primera tarjeta. */
 :root {
-  --site-max: 1120px;
-}
-
-@media (min-width: 1280px) {
-  :root {
-    --site-max: 1220px;
-  }
-}
-
-@media (min-width: 1536px) {
-  :root {
-    --site-max: 1380px;
-  }
+  --site-max: 1920px;
+  --gutter: clamp(1rem, 4vw, 4.5rem);
 }
 
 .container-site {
   width: 100%;
   max-width: var(--site-max);
   margin-inline: auto;
-  padding-inline: 1rem;
+  padding-inline: var(--gutter);
 }
 
-@media (min-width: 768px) {
-  .container-site {
-    padding-inline: 2rem;
+/* Cierre de la página (Contacto.astro): contacto y footer en una sola hoja.
+   El ámbar entra como un resplandor desde arriba, no como relleno: el color de acción
+   se reserva para lo que se pulsa (la tarjeta de WhatsApp). */
+.contact-glow {
+  background:
+    radial-gradient(45% 55% at 20% 0%, rgb(245 158 11 / 0.16), transparent 70%),
+    radial-gradient(40% 45% at 85% 0%, rgb(245 158 11 / 0.08), transparent 70%);
+}
+
+:root[data-theme='light'] .contact-glow {
+  background:
+    radial-gradient(45% 55% at 20% 0%, rgb(245 158 11 / 0.14), transparent 70%),
+    radial-gradient(40% 45% at 85% 0%, rgb(245 158 11 / 0.07), transparent 70%);
+}
+
+/* Foco de luz que sigue al puntero, en métricas y canales de contacto (las coordenadas
+   las pone src/scripts/spotlight.ts). Solo con ratón: en pantallas táctiles no hay
+   puntero que seguir. La tarjeta necesita `relative isolate` para contenerlo. */
+[data-spotlight]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(245 158 11 / 0.14), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.channel-card--featured::before {
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.35), transparent 70%);
+}
+
+@media (hover: hover) {
+  [data-spotlight]:hover::before {
+    opacity: 1;
   }
+}
+
+/* Línea de tiempo en movimiento (Experience.astro; la mueve Motion.astro).
+   Sin `.tl-live` no existe: la línea ámbar y el cabezal ni se pintan, y los puntos
+   conservan su aspecto de siempre. Con el script activo, los puntos esperan apagados
+   hasta que la línea los alcanza (`.is-reached`). */
+[data-tl-progress],
+[data-tl-head] {
+  display: none;
+}
+
+.tl-live [data-tl-progress],
+.tl-live [data-tl-head] {
+  display: block;
+}
+
+.tl-live [data-dot] {
+  transition:
+    background-color 0.4s ease-out,
+    border-color 0.4s ease-out,
+    box-shadow 0.4s ease-out;
+}
+
+.tl-live [data-dot]:not(.is-reached) {
+  border-color: var(--color-line);
+  background-color: var(--color-bg);
+  box-shadow: none;
+}
+
+.tl-live [data-dot].is-reached {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  box-shadow: 0 0 0 4px rgb(245 158 11 / 0.2);
+}
+
+/* El empleo actual sigue latiendo una vez alcanzado: es "ahora". */
+.tl-live [data-dot][data-current].is-reached::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background-color: var(--color-accent);
+  animation: tl-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes tl-ping {
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* El año de cada empleo se enciende junto con su punto. */
+.tl-live [data-tl-year] {
+  transition: opacity 0.4s ease-out;
+}
+
+.tl-live li:not(:has(.is-reached)) [data-tl-year] {
+  opacity: 0.35;
+}
+
+/* El nombre como firma: ocupa el ancho del contenido y se desvanece hacia abajo, donde
+   el borde de la página lo recorta. El tamaño va en `vw` para que llene la fila en
+   cualquier pantalla; el tope evita que en monitores enormes se salga. */
+.contact-wordmark {
+  font-size: clamp(3rem, 12.4vw, 15rem);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--color-text) 14%, transparent), transparent 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Barra de progreso de lectura: una línea de 2px arriba del todo. */
@@ -145,6 +240,24 @@ html:not([data-theme='light']) .theme-icon-moon {
   display: none;
 }
 
+/* Cambio de tema con revelado circular (el recorte lo anima el script de Nav.astro).
+   Se quita el fundido por defecto del navegador: la foto vieja queda quieta debajo y
+   la nueva entra solo por el círculo. `.theme-switching` acota esto al cambio de tema,
+   para no tocar las transiciones de navegación del ClientRouter. */
+.theme-switching::view-transition-old(root),
+.theme-switching::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Durante el revelado se apagan las transiciones de color de los componentes: si no,
+   dentro del círculo los botones seguirían fundiéndose del color viejo al nuevo. */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
 /* Estado inicial de las animaciones. Solo se aplica si JS va a animarlas:
    sin esta clase en <html>, el contenido se ve aunque el script falle. */
 .js-motion [data-reveal],
@@ -178,18 +291,10 @@ html:not([data-theme='light']) .theme-icon-moon {
    vestibulares. Aquí no se atenúa: se apaga. */
 @media (prefers-reduced-motion: reduce) {
   .js-motion [data-reveal],
-  /* Las palabras esperan bajo su máscara hasta que el motor de animación las sube.
-   `translateY` y `opacity` son las dos únicas propiedades que se animan en todo el
-   sitio: el navegador las resuelve en la tarjeta gráfica, sin recalcular el diseño. */
-.js-motion [data-word] {
-  transform: translateY(110%);
-}
-
-.js-motion [data-bar] {
-  transform: scaleX(0);
-}
-
-.js-motion [data-line] {
+  .js-motion [data-hero-step],
+  .js-motion [data-word],
+  .js-motion [data-bar],
+  .js-motion [data-line] {
     opacity: 1;
     transform: none;
   }

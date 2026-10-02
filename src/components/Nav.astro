@@ -3,7 +3,6 @@ import { profile } from '../data/profile';
 import { langFromUrl, localizedPath, t, ui } from '../i18n/config';
 
 const lang = langFromUrl(Astro.url);
-const other = lang === 'es' ? 'en' : 'es';
 
 // Los id de las secciones son los mismos en ambos idiomas: un enlace compartido
 // a /#proyectos o /en/#proyectos funciona igual.
@@ -19,23 +18,25 @@ const links = [
      sobre el contenido que pasa por debajo. -->
 <nav class="sticky top-0 z-40 px-3 pt-3 md:px-6" aria-label={t(ui.a11y.mainNav, lang)}>
   <div
-    class="container-site flex h-14 items-center justify-between gap-4 rounded-full border border-line bg-bg/75 py-2 pr-2 pl-2 shadow-[0_8px_30px_-12px_rgb(0_0_0/0.25)] backdrop-blur-xl"
+    class="container-site relative flex h-14 items-center justify-between gap-2 rounded-full md:gap-4 border border-line bg-bg/75 py-2 pr-2 pl-2 shadow-[0_8px_30px_-12px_rgb(0_0_0/0.25)] backdrop-blur-xl"
   >
     <a
       href={`${localizedPath(lang)}#top`}
       aria-label={t(ui.a11y.home, lang)}
-      class="flex items-center gap-2.5 rounded-full py-1 pr-3 pl-1 transition-colors hover:bg-surface"
+      class="flex items-center gap-3 rounded-full py-1 pr-1 pl-1 transition-colors hover:bg-surface lg:pr-4"
     >
-      {/* Mismo monograma que el favicon: ámbar sobre navy en los dos modos. */}
+      {/* Sello de marca: cuadrado ámbar con las iniciales en navy, igual que el favicon.
+          Cuadrado y no círculo: el círculo se lee como foto de perfil, el cuadrado como marca. */}
       <span
-        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0a1628] text-[13px] font-extrabold tracking-[-0.02em] text-accent"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-[13px] font-extrabold tracking-[-0.04em] text-on-accent"
         aria-hidden="true"
       >
         JM
       </span>
-      {/* El cargo solo desde 1024px: con los enlaces visibles, por debajo no cabe. */}
-      <span class="hidden text-[15px] font-semibold tracking-[-0.01em] whitespace-nowrap lg:inline">
-        {t(profile.role, lang)}
+      {/* Nombre y cargo apilados, desde 1024px: por debajo, con los enlaces visibles, no caben. */}
+      <span class="hidden flex-col leading-tight whitespace-nowrap lg:flex">
+        <span class="text-[15px] font-semibold tracking-[-0.01em]">{profile.name}</span>
+        <span class="text-xs text-muted">{t(profile.role, lang)}</span>
       </span>
     </a>
 
@@ -57,17 +58,36 @@ const links = [
     </ul>
 
     <div class="flex items-center gap-1.5">
-      <div class="flex items-center rounded-full bg-surface/70 p-1">
-        <a
-          href={localizedPath(other)}
-          hreflang={other}
-          lang={other}
-          aria-label={t(ui.a11y.langSwitch, lang)}
-          title={t(ui.a11y.langSwitch, lang)}
-          class="flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold text-muted uppercase transition-colors hover:bg-bg hover:text-text"
-        >
-          {other}
-        </a>
+      <div class="flex items-center gap-1 rounded-full bg-surface/70 p-1 sm:pl-3">
+        {/* Selector segmentado: los dos idiomas siempre visibles, el activo relleno con la
+            tinta del texto (se invierte solo entre modo claro y oscuro). El activo no es
+            enlace: no lleva a ningún sitio nuevo. El otro idioma se precarga al abrir la página,
+            así el cambio no espera a la red. */}
+        <div class="flex items-center font-mono text-[11px] font-medium tracking-[0.08em] uppercase" role="group" aria-label={t(ui.a11y.langSwitch, lang)}>
+          {
+            (['en', 'es'] as const).map((code) =>
+              code === lang ? (
+                <span
+                  aria-current="true"
+                  class="flex h-7 min-w-9 items-center justify-center border border-text bg-text px-2 text-bg first:rounded-l-sm last:rounded-r-sm"
+                >
+                  {code}
+                </span>
+              ) : (
+                <a
+                  href={localizedPath(code)}
+                  hreflang={code}
+                  lang={code}
+                  title={t(ui.a11y.langSwitch, lang)}
+                  data-astro-prefetch="load"
+                  class="flex h-7 min-w-9 items-center justify-center border border-line px-2 text-muted transition-colors first:rounded-l-sm last:rounded-r-sm hover:border-text hover:text-text"
+                >
+                  {code}
+                </a>
+              ),
+            )
+          }
+        </div>
         <!-- Muestra el icono de lo que HARÁ al pulsarlo: en oscuro un sol, en claro una luna.
              El nombre accesible se actualiza por JS con la misma lógica. -->
         <button
@@ -88,59 +108,183 @@ const links = [
           </svg>
         </button>
       </div>
-      <!-- Contacto es la acción principal de la barra: ámbar, como todo lo que es acción. -->
+      <!-- Contacto es la acción principal de la barra: ámbar, como todo lo que es acción.
+           Margen extra a la izquierda para que no se lea como parte de los ajustes. -->
       <a
         href="#contacto"
         data-nav-link="contacto"
-        class="flex h-10 items-center rounded-full bg-accent px-4 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90"
+        class="flex h-10 items-center rounded-full bg-accent px-3 sm:ml-3 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 sm:px-4"
       >
         {t(ui.nav.contact, lang)}
       </a>
+
+      <!-- Menú de secciones en móvil: los enlaces de la cápsula no caben por debajo de 768px.
+           El icono cambia de hamburguesa a X según aria-expanded, sin JS de por medio. -->
+      <button
+        type="button"
+        data-menu-toggle
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label={t(ui.a11y.openMenu, lang)}
+        data-label-open={t(ui.a11y.openMenu, lang)}
+        data-label-close={t(ui.a11y.closeMenu, lang)}
+        class="group flex h-10 w-10 items-center justify-center rounded-full bg-surface/70 text-text transition-colors hover:bg-surface md:hidden"
+      >
+        <svg class="block group-aria-expanded:hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+        <svg class="hidden group-aria-expanded:block" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Panel desplegable. `invisible` lo saca también del orden de tabulación cuando está
+         cerrado; al abrirse baja y aparece con una transición corta (el CSS global la
+         anula con movimiento reducido). Fondo opaco a propósito: un desenfoque dentro de
+         la barra (que ya desenfoca) no funciona y dejaba leer el texto de atrás. -->
+    <div
+      id="mobile-menu"
+      data-menu-panel
+      class="invisible absolute inset-x-0 top-full mt-2 -translate-y-2 rounded-3xl border border-line bg-bg p-2 opacity-0 shadow-[0_16px_40px_-12px_rgb(0_0_0/0.4)] transition duration-200 data-open:visible data-open:translate-y-0 data-open:opacity-100 md:hidden"
+    >
+      <ul class="flex flex-col">
+        {
+          links.map((l) => (
+            <li>
+              <a
+                href={l.href}
+                data-nav-link={l.href.slice(1)}
+                data-menu-link
+                class="flex items-center justify-between rounded-2xl px-4 py-3.5 text-base font-medium text-muted transition-colors hover:bg-surface hover:text-text aria-[current=true]:bg-surface aria-[current=true]:text-text"
+              >
+                {l.label}
+                <span class="text-muted" aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </div>
 </nav>
 
 <script>
-  const root = document.documentElement;
-  const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
-  const themeColor = document.querySelector('meta[name="theme-color"]');
+  import { onPage } from '../scripts/page';
 
-  const sync = () => {
-    const light = root.dataset.theme === 'light';
-    toggle?.setAttribute('aria-label', (light ? toggle.dataset.labelDark : toggle.dataset.labelLight) ?? '');
-    themeColor?.setAttribute('content', light ? '#f4f6fa' : '#0a1628');
-  };
-  sync();
+  onPage((signal) => {
+    const root = document.documentElement;
+    const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+    const themeColor = document.querySelector('meta[name="theme-color"]');
 
-  toggle?.addEventListener('click', () => {
-    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
-    root.dataset.theme = next;
+    const sync = () => {
+      const light = root.dataset.theme === 'light';
+      toggle?.setAttribute('aria-label', (light ? toggle.dataset.labelDark : toggle.dataset.labelLight) ?? '');
+      themeColor?.setAttribute('content', light ? '#f4f6fa' : '#0a1628');
+    };
     sync();
-    try {
-      localStorage.setItem('theme', next);
-    } catch {
-      // Sin almacenamiento la elección dura solo esta visita: aceptable.
+
+    const applyTheme = (next: 'light' | 'dark') => {
+      root.dataset.theme = next;
+      sync();
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        // Sin almacenamiento la elección dura solo esta visita: aceptable.
+      }
+    };
+
+    // El tema nuevo se revela en un círculo que nace del propio botón y cubre la
+    // pantalla: se ve de dónde vino el cambio. Lo hace el navegador (View Transitions):
+    // fotografía la página antes y después, y solo se anima un recorte sobre la foto
+    // nueva. Sin soporte, o con movimiento reducido, el cambio es instantáneo.
+    toggle?.addEventListener('click', () => {
+      const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+      const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!document.startViewTransition || calm) return applyTheme(next);
+
+      // Centro del botón y no el punto del clic: con teclado el clic no trae coordenadas.
+      const box = toggle.getBoundingClientRect();
+      const x = box.left + box.width / 2;
+      const y = box.top + box.height / 2;
+      // Radio hasta la esquina más lejana, para que el círculo acabe cubriéndolo todo.
+      const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+
+      root.classList.add('theme-switching');
+      const transition = document.startViewTransition(() => applyTheme(next));
+      transition.ready.then(() => {
+        root.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 650, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', pseudoElement: '::view-transition-new(root)' },
+        );
+      });
+      transition.finished.finally(() => root.classList.remove('theme-switching'));
+    });
+
+    // Resalta en la barra la sección que está en pantalla. La franja de detección es una
+    // línea cerca del centro vertical, así solo una sección está activa a la vez.
+    const navLinks = document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
+    const ids = [...new Set([...navLinks].map((a) => a.dataset.navLink!))];
+    const setActive = (id: string | null) =>
+      navLinks.forEach((a) => a.setAttribute('aria-current', String(a.dataset.navLink === id)));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(e.target.id);
+      },
+      { rootMargin: '-45% 0px -54% 0px' },
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    // En el hero no hay sección activa.
+    const heroObserver = new IntersectionObserver(([e]) => e.isIntersecting && setActive(null), {
+      rootMargin: '-45% 0px -54% 0px',
+    });
+    heroObserver.observe(document.getElementById('top')!);
+    signal.addEventListener('abort', () => {
+      observer.disconnect();
+      heroObserver.disconnect();
+    });
+
+    // ---- Menú móvil --------------------------------------------------------
+    const menuButton = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+    const menuPanel = document.querySelector<HTMLElement>('[data-menu-panel]');
+
+    if (menuButton && menuPanel) {
+      const isOpen = () => menuButton.getAttribute('aria-expanded') === 'true';
+
+      const setOpen = (open: boolean, { restoreFocus = false } = {}) => {
+        menuButton.setAttribute('aria-expanded', String(open));
+        menuButton.setAttribute('aria-label', (open ? menuButton.dataset.labelClose : menuButton.dataset.labelOpen) ?? '');
+        menuPanel.toggleAttribute('data-open', open);
+        // Al abrir con teclado el foco entra al primer enlace; al cerrar con Escape vuelve
+        // al botón, para no dejar a quien navega con teclado perdido en la página.
+        if (open) menuPanel.querySelector<HTMLAnchorElement>('a')?.focus({ preventScroll: true });
+        else if (restoreFocus) menuButton.focus();
+      };
+
+      menuButton.addEventListener('click', () => setOpen(!isOpen()));
+
+      // Elegir una sección cierra el menú: el ancla hace el resto.
+      menuPanel.querySelectorAll('[data-menu-link]').forEach((link) =>
+        link.addEventListener('click', () => setOpen(false)),
+      );
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isOpen()) setOpen(false, { restoreFocus: true });
+      }, { signal });
+
+      // Un toque fuera de la barra también lo cierra.
+      document.addEventListener('pointerdown', (event) => {
+        if (isOpen() && !menuButton.closest('nav')!.contains(event.target as Node)) setOpen(false);
+      }, { signal });
+
+      // Si la pantalla crece hasta mostrar la cápsula de escritorio, el panel sobra.
+      window.matchMedia('(min-width: 768px)').addEventListener('change', (event) => {
+        if (event.matches) setOpen(false);
+      }, { signal });
     }
   });
-
-  // Resalta en la barra la sección que está en pantalla. La franja de detección es una
-  // línea cerca del centro vertical, así solo una sección está activa a la vez.
-  const navLinks = document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
-  const ids = [...new Set([...navLinks].map((a) => a.dataset.navLink!))];
-  const setActive = (id: string | null) =>
-    navLinks.forEach((a) => a.setAttribute('aria-current', String(a.dataset.navLink === id)));
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) if (e.isIntersecting) setActive(e.target.id);
-    },
-    { rootMargin: '-45% 0px -54% 0px' },
-  );
-  ids.forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
-  // En el hero no hay sección activa.
-  new IntersectionObserver(([e]) => e.isIntersecting && setActive(null), { rootMargin: '-45% 0px -54% 0px' })
-    .observe(document.getElementById('top')!);
 </script>

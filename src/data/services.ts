@@ -1,5 +1,6 @@
 // Cada servicio apunta a una prueba real. Sin prueba, no va en la lista.
 // `icon` es el trazo SVG (24×24) de un pictograma genérico, no un logo de marca.
+// `proofHref` lleva a la sección donde está esa prueba (proyecto o experiencia).
 import type { L } from '../i18n/config';
 
 export const services = [
@@ -21,6 +22,7 @@ export const services = [
       es: 'Organization Manager — Stanley Black & Decker',
       en: 'Organization Manager — Stanley Black & Decker',
     } as L,
+    proofHref: '#proyectos',
   },
   {
     id: 'integraciones',
@@ -40,6 +42,7 @@ export const services = [
       es: '200.000+ registros migrados sin interrumpir el negocio',
       en: '200,000+ records migrated with no business interruption',
     } as L,
+    proofHref: '#experiencia',
   },
   {
     id: 'cloud',
@@ -59,6 +62,7 @@ export const services = [
       es: 'JA Manager — doble pipeline a Render y Azure',
       en: 'JA Manager — dual pipeline to Render and Azure',
     } as L,
+    proofHref: '#proyectos',
   },
   {
     id: 'plataformas',
@@ -78,5 +82,6 @@ export const services = [
       es: 'JA Manager — en producción, con usuarios reales',
       en: 'JA Manager — in production, with real users',
     } as L,
+    proofHref: '#proyectos',
   },
 ] as const;

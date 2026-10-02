@@ -30,3 +30,6 @@ reports/
 
 # Claude Code personal/local overrides (settings.json itself is shared)
 .claude/settings.local.json
+
+# Cloudflare Wrangler local state
+.wrangler/

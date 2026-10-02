@@ -12,161 +12,237 @@
   import gsap from 'gsap';
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
   import Lenis from 'lenis';
+  import { onPage } from '../scripts/page';
 
   const EASE = 'expo.out';
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Avisa al seguro del <head> que el motor de animación sí arrancó.
-  document.documentElement.dataset.motionReady = 'true';
-
-  if (reduced) {
-    // Sin animación: quitar el estado inicial para que nada quede invisible.
-    document.documentElement.classList.remove('js-motion');
-  } else {
+  // Lenis y el reloj de GSAP viven toda la visita: se crean una sola vez, no por página.
+  if (!reduced) {
     gsap.registerPlugin(ScrollTrigger);
 
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add((t) => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
+    // El cambio de idioma (Base.astro) lo usa para volver al mismo punto de la página.
+    (window as { siteLenis?: Lenis }).siteLenis = lenis;
+  }
 
-    // --- Barra de progreso de lectura -------------------------------------
-    const progress = document.querySelector<HTMLElement>('[data-read-progress]');
-    if (progress) {
-      ScrollTrigger.create({
-        start: 0,
-        end: 'max',
-        onUpdate: (self) => gsap.set(progress, { scaleX: self.progress }),
-      });
+  onPage((signal) => {
+    const root = document.documentElement;
+    // Avisa al seguro del <head> que el motor de animación sí arrancó.
+    root.dataset.motionReady = 'true';
+
+    if (reduced) {
+      // Sin animación: quitar el estado inicial para que nada quede invisible.
+      root.classList.remove('js-motion');
+      return;
     }
 
-    // --- Texto que sube desde su máscara ----------------------------------
-    // `fromTo` y no `to`: el CSS deja las palabras en translateY(110%), que GSAP lee
-    // como píxeles. Animar solo `yPercent` dejaría ese desplazamiento intacto y el
-    // texto no subiría nunca. Fijando el origen, las dos medidas quedan en cero.
-    const WORDS_FROM = { yPercent: 110, y: 0 };
-    const WORDS_TO = { yPercent: 0, y: 0, duration: 1, ease: EASE, stagger: 0.055 };
-
-    const revealWords = (scope: HTMLElement, delay = 0) =>
-      gsap.fromTo(scope.querySelectorAll('[data-word]'), WORDS_FROM, { ...WORDS_TO, delay });
-
-    gsap.utils.toArray<HTMLElement>('[data-reveal-text]').forEach((el) => {
-      if (el.hasAttribute('data-immediate')) return; // los del hero los lanza la entrada
-      gsap.fromTo(el.querySelectorAll('[data-word]'), WORDS_FROM, {
-        ...WORDS_TO,
-        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
-      });
-    });
-
-    // --- Entrada del hero: un orden, no todo a la vez ---------------------
-    const hero = document.getElementById('top');
-    if (hero) {
-      const tl = gsap.timeline({ defaults: { ease: EASE, duration: 0.9 } });
-
-      tl.to(hero.querySelectorAll('[data-hero-step]'), { opacity: 1, y: 0, stagger: 0.09 }, 0.15);
-
-      hero.querySelectorAll<HTMLElement>('[data-reveal-text][data-immediate]').forEach((el, i) => {
-        tl.add(revealWords(el, 0), 0.25 + i * 0.12);
-      });
-
-      // La foto entra con un acercamiento muy leve: da profundidad sin que se note el truco.
-      const portrait = hero.querySelector<HTMLElement>('[data-hero-portrait]');
-      if (portrait) tl.fromTo(portrait, { scale: 1.06 }, { scale: 1, duration: 1.4 }, 0.1);
+    // Todo lo creado en esta página se recoge en un contexto y se descarta al salir.
+    // `kill` y no `revert`: revertir devolvería por un instante el estado oculto.
+    const ctx = gsap.context(() => {
+      // --- Barra de progreso de lectura -------------------------------------
+      const progress = document.querySelector<HTMLElement>('[data-read-progress]');
+      if (progress) {
+        ScrollTrigger.create({
+          start: 0,
+          end: 'max',
+          onUpdate: (self) => gsap.set(progress, { scaleX: self.progress }),
+        });
+      }
 
       // Paralaje al bajar: la foto se mueve menos que el texto.
-      if (portrait && window.matchMedia('(min-width: 1024px)').matches) {
+      const hero = document.getElementById('top');
+      const portrait = hero?.querySelector<HTMLElement>('[data-hero-portrait]');
+      if (hero && portrait && window.matchMedia('(min-width: 1024px)').matches) {
         gsap.to(portrait, {
           yPercent: -6,
           ease: 'none',
           scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.5 },
         });
       }
-    }
 
-    // --- Bloques que aparecen al entrar en pantalla -----------------------
-    // Los grupos entran escalonados con un solo disparador, así se nota el orden.
-    gsap.utils.toArray<HTMLElement>('[data-reveal-group]').forEach((group) => {
-      gsap.to(group.querySelectorAll(':scope > [data-reveal]'), {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        ease: EASE,
-        stagger: 0.08,
-        scrollTrigger: { trigger: group, start: 'top 88%', once: true },
+      // --- Línea de tiempo de Experiencia, dibujada por el scroll ------------
+      // La línea ámbar va del primer punto al último y su punta coincide siempre con la
+      // misma altura de la pantalla (60%): bajar la "reproduce", subir la rebobina.
+      // Cada punto se enciende cuando la punta lo alcanza.
+      const timeline = document.querySelector<HTMLElement>('[data-timeline]');
+      const line = timeline?.querySelector<HTMLElement>('[data-tl-progress]');
+      const head = timeline?.querySelector<HTMLElement>('[data-tl-head]');
+      const dots = timeline ? [...timeline.querySelectorAll<HTMLElement>('[data-dot]')] : [];
+      if (timeline && line && head && dots.length > 1) {
+        // Centro de un punto respecto a la línea de tiempo. offsetTop y no
+        // getBoundingClientRect: ignora los desplazamientos de las animaciones de entrada.
+        // Se suma subiendo por la cadena de offsetParent porque un <li> con transform
+        // (el de la entrada animada) también cuenta como referencia.
+        const centerOf = (dot: HTMLElement) => {
+          let y = dot.offsetHeight / 2;
+          for (let el: HTMLElement | null = dot; el && el !== timeline; el = el.offsetParent as HTMLElement | null) {
+            y += el.offsetTop;
+          }
+          return y;
+        };
+        const measure = () => {
+          const top = centerOf(dots[0]);
+          line.style.top = head.style.top = `${top}px`;
+          line.style.height = `${centerOf(dots[dots.length - 1]) - top}px`;
+        };
+        measure();
+        // Las alturas cambian con el ancho y las fuentes: se mide antes de cada recálculo.
+        ScrollTrigger.addEventListener('refreshInit', measure);
+        signal.addEventListener('abort', () => ScrollTrigger.removeEventListener('refreshInit', measure));
+        timeline.classList.add('tl-live');
+
+        // El disparador es el contenedor, no la línea: la línea arranca en scaleY(0) y
+        // ScrollTrigger la mediría con alto cero (inicio y fin en el mismo punto).
+        const playhead = {
+          trigger: timeline,
+          start: () => `top+=${line.offsetTop} 60%`,
+          end: () => `top+=${line.offsetTop + line.offsetHeight} 60%`,
+          scrub: 0.4,
+        };
+        gsap.fromTo(line, { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: playhead });
+        gsap.set(head, { xPercent: -50, yPercent: -50 });
+        gsap.fromTo(
+          head,
+          { y: 0 },
+          { y: () => line.offsetHeight, ease: 'none', scrollTrigger: { ...playhead, invalidateOnRefresh: true } },
+        );
+
+        dots.forEach((dot) => {
+          ScrollTrigger.create({
+            trigger: dot,
+            start: 'center 60%',
+            onEnter: () => dot.classList.add('is-reached'),
+            onLeaveBack: () => dot.classList.remove('is-reached'),
+          });
+        });
+      }
+
+      // Las entradas animadas solo en la primera carga. Tras un cambio de idioma la
+      // página llega sin `js-motion`, con todo ya visible, y no se repiten.
+      if (!root.classList.contains('js-motion')) return;
+
+      // --- Texto que sube desde su máscara ----------------------------------
+      // `fromTo` y no `to`: el CSS deja las palabras en translateY(110%), que GSAP lee
+      // como píxeles. Animar solo `yPercent` dejaría ese desplazamiento intacto y el
+      // texto no subiría nunca. Fijando el origen, las dos medidas quedan en cero.
+      const WORDS_FROM = { yPercent: 110, y: 0 };
+      const WORDS_TO = { yPercent: 0, y: 0, duration: 1, ease: EASE, stagger: 0.055 };
+
+      const revealWords = (scope: HTMLElement, delay = 0) =>
+        gsap.fromTo(scope.querySelectorAll('[data-word]'), WORDS_FROM, { ...WORDS_TO, delay });
+
+      gsap.utils.toArray<HTMLElement>('[data-reveal-text]').forEach((el) => {
+        if (el.hasAttribute('data-immediate')) return; // los del hero los lanza la entrada
+        gsap.fromTo(el.querySelectorAll('[data-word]'), WORDS_FROM, {
+          ...WORDS_TO,
+          scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+        });
+      });
+
+      // --- Entrada del hero: un orden, no todo a la vez ---------------------
+      if (hero) {
+        const tl = gsap.timeline({ defaults: { ease: EASE, duration: 0.9 } });
+
+        tl.to(hero.querySelectorAll('[data-hero-step]'), { opacity: 1, y: 0, stagger: 0.09 }, 0.15);
+
+        hero.querySelectorAll<HTMLElement>('[data-reveal-text][data-immediate]').forEach((el, i) => {
+          tl.add(revealWords(el, 0), 0.25 + i * 0.12);
+        });
+
+        // La foto entra con un acercamiento muy leve: da profundidad sin que se note el truco.
+        if (portrait) tl.fromTo(portrait, { scale: 1.06 }, { scale: 1, duration: 1.4 }, 0.1);
+      }
+
+      // --- Bloques que aparecen al entrar en pantalla -----------------------
+      // Los grupos entran escalonados con un solo disparador, así se nota el orden.
+      gsap.utils.toArray<HTMLElement>('[data-reveal-group]').forEach((group) => {
+        gsap.to(group.querySelectorAll(':scope > [data-reveal]'), {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: EASE,
+          stagger: 0.08,
+          scrollTrigger: { trigger: group, start: 'top 88%', once: true },
+        });
+      });
+
+      gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
+        if (el.parentElement?.hasAttribute('data-reveal-group')) return;
+        gsap.to(el, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: EASE,
+          scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+        });
+      });
+
+      // --- Detalles ---------------------------------------------------------
+      // Subrayado de las métricas: crece de izquierda a derecha.
+      gsap.utils.toArray<HTMLElement>('[data-bar]').forEach((el) => {
+        gsap.to(el, {
+          scaleX: 1,
+          duration: 0.9,
+          ease: EASE,
+          delay: 0.25,
+          scrollTrigger: { trigger: el, start: 'top 92%', once: true },
+        });
+      });
+
+      // Los puntos de la línea de tiempo aparecen con un pequeño golpe.
+      gsap.utils.toArray<HTMLElement>('[data-dot]').forEach((el) => {
+        gsap.from(el, {
+          scale: 0,
+          duration: 0.7,
+          ease: 'back.out(2)',
+          scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+        });
+      });
+
+      // Las líneas de la respuesta JSON del footer llegan una a una.
+      gsap.utils.toArray<HTMLElement>('[data-line]').forEach((el, i) => {
+        gsap.to(el, {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          ease: EASE,
+          delay: i * 0.08,
+          scrollTrigger: { trigger: el, start: 'top 92%', once: true },
+        });
+      });
+
+      // Las métricas cuentan hacia arriba al entrar. El HTML ya trae el valor final:
+      // si este script falla, el número correcto ya está en pantalla.
+      gsap.utils.toArray<HTMLElement>('[data-count]').forEach((el) => {
+        const target = Number(el.dataset.count);
+        const locale = el.dataset.countLocale ?? 'es-CO';
+        const counter = { value: 0 };
+        gsap.to(counter, {
+          value: target,
+          duration: 1.6,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+          // El 0 se pone al arrancar la animación, no al cargar: si se pusiera antes,
+          // una tarjeta aún sin disparar mostraría "0" mientras el visitante la ve.
+          onStart: () => {
+            el.textContent = (0).toLocaleString(locale);
+          },
+          onUpdate: () => {
+            el.textContent = Math.round(counter.value).toLocaleString(locale);
+          },
+          onComplete: () => {
+            el.textContent = target.toLocaleString(locale);
+          },
+        });
       });
     });
-
-    gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
-      if (el.parentElement?.hasAttribute('data-reveal-group')) return;
-      gsap.to(el, {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        ease: EASE,
-        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
-      });
-    });
-
-    // --- Detalles ---------------------------------------------------------
-    // Subrayado de las métricas: crece de izquierda a derecha.
-    gsap.utils.toArray<HTMLElement>('[data-bar]').forEach((el) => {
-      gsap.to(el, {
-        scaleX: 1,
-        duration: 0.9,
-        ease: EASE,
-        delay: 0.25,
-        scrollTrigger: { trigger: el, start: 'top 92%', once: true },
-      });
-    });
-
-    // Los puntos de la línea de tiempo aparecen con un pequeño golpe.
-    gsap.utils.toArray<HTMLElement>('[data-dot]').forEach((el) => {
-      gsap.from(el, {
-        scale: 0,
-        duration: 0.7,
-        ease: 'back.out(2)',
-        scrollTrigger: { trigger: el, start: 'top 90%', once: true },
-      });
-    });
-
-    // Las líneas de la respuesta JSON del footer llegan una a una.
-    gsap.utils.toArray<HTMLElement>('[data-line]').forEach((el, i) => {
-      gsap.to(el, {
-        opacity: 1,
-        x: 0,
-        duration: 0.5,
-        ease: EASE,
-        delay: i * 0.08,
-        scrollTrigger: { trigger: el, start: 'top 92%', once: true },
-      });
-    });
-
-    // Las métricas cuentan hacia arriba al entrar. El HTML ya trae el valor final:
-    // si este script falla, el número correcto ya está en pantalla.
-    gsap.utils.toArray<HTMLElement>('[data-count]').forEach((el) => {
-      const target = Number(el.dataset.count);
-      const locale = el.dataset.countLocale ?? 'es-CO';
-      const counter = { value: 0 };
-      gsap.to(counter, {
-        value: target,
-        duration: 1.6,
-        ease: 'power2.out',
-        scrollTrigger: { trigger: el, start: 'top 90%', once: true },
-        // El 0 se pone al arrancar la animación, no al cargar: si se pusiera antes,
-        // una tarjeta aún sin disparar mostraría "0" mientras el visitante la ve.
-        onStart: () => {
-          el.textContent = (0).toLocaleString(locale);
-        },
-        onUpdate: () => {
-          el.textContent = Math.round(counter.value).toLocaleString(locale);
-        },
-        onComplete: () => {
-          el.textContent = target.toLocaleString(locale);
-        },
-      });
-    });
+    signal.addEventListener('abort', () => ctx.kill());
 
     // Recalcula posiciones una vez que las fuentes cambian las alturas de línea.
     document.fonts?.ready.then(() => ScrollTrigger.refresh());
-  }
+  });
 </script>

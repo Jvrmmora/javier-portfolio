@@ -3,7 +3,41 @@
 Sitio personal de **Javier Montaño**, Backend & Cloud Engineer (Bogotá, Colombia).
 Presenta servicios, proyectos, experiencia y formas de contacto, en **español e inglés**.
 
+<div align="center">
+<img src="docs/hero-escritorio.png" alt="Portada del portafolio en escritorio: nombre, cargo, botones de contacto y retrato con tarjeta de disponibilidad" width="820" />
+</div>
+
 > El sitio está construido y listo para desplegar. Cuando esté en línea, la URL va aquí.
+
+## Vista previa
+
+<div align="center">
+<img src="docs/proyectos.png" alt="Sección de proyectos: JA Manager como proyecto destacado, con su descripción, tecnologías y dos capturas" width="820" />
+<br /><br />
+<img src="docs/movil.png" alt="Portada en móvil, modo oscuro" width="280" />
+</div>
+
+Claro y oscuro, español e inglés, y adaptado desde 390 px de ancho.
+
+## Cómo funciona
+
+No hay servidor ni base de datos: el contenido son archivos TypeScript y todo se resuelve
+en el build. Astro genera HTML estático que Cloudflare sirve como assets.
+
+```mermaid
+flowchart LR
+  D["src/data/*.ts<br/>contenido { es, en }"] --> C["Componentes .astro<br/>Hero, Projects, Experience…"]
+  I["src/i18n/config.ts<br/>idioma desde la URL"] --> C
+  L["src/lib<br/>logos a currentColor"] --> C
+  C --> P["Páginas<br/>/ (es) · /en/ · 404"]
+  S["src/styles<br/>tokens claro/oscuro"] --> P
+  P -->|astro build| H["dist/<br/>HTML + CSS estático"]
+  H -->|wrangler deploy| W["Cloudflare Workers<br/>assets estáticos"]
+  H -.->|en el navegador| M["GSAP + Lenis<br/>revelados y scroll"]
+```
+
+El único JavaScript en el cliente es el de movimiento ([`src/scripts/`](src/scripts)); sin
+él, o con `prefers-reduced-motion`, la página es completa y estática.
 
 ## Cómo está hecho
 
@@ -45,6 +79,7 @@ src/
 ├── layouts/      # Documento base: SEO, tema, accesibilidad
 ├── lib/          # Resolución de logos en tiempo de compilación
 ├── pages/        # / (es), /en/ (en) y 404
+├── scripts/      # Movimiento en el cliente (spotlight, revelados)
 └── styles/       # Tokens y utilidades globales
 ```
 
@@ -64,7 +99,7 @@ npx wrangler login
 npx astro build && npx wrangler deploy
 ```
 
-La configuración está en [`wrangler.jsonc`](wrangler.jsonc): sirve `dist/` como assets
+Requiere Node ≥ 22.12 y una cuenta de Cloudflare (el plan gratuito basta). La configuración está en [`wrangler.jsonc`](wrangler.jsonc): sirve `dist/` como assets
 estáticos, sin código de servidor.
 
 ## Accesibilidad

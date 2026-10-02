@@ -1,93 +1,151 @@
 ---
-import { getChannels, profile } from '../data/profile';
+import { getChannels, heroCard, profile } from '../data/profile';
 import { langFromUrl, t, ui } from '../i18n/config';
-import LinkRow from './LinkRow.astro';
-import Section from './Section.astro';
-import Panel from './Panel.astro';
+import ChannelCard from './ChannelCard.astro';
+import RevealText from './RevealText.astro';
 
 const lang = langFromUrl(Astro.url);
-// Las filas no muestran `handle`: el número y el correo no se imprimen en la página.
+// Las tarjetas no muestran `handle`: el número y el correo no se imprimen en la página.
 // El canal se identifica por su logo y su nombre, y el dato viaja dentro del enlace.
 const channels = getChannels(lang);
 ---
 
-<Section
-  id="contacto"
-  title={t(ui.sections.contactTitle, lang)}
-  eyebrow={t(ui.sections.contactEyebrow, lang)}
-  class="pb-10 md:pb-12"
->
-  <p class="mb-10 max-w-[52ch] leading-relaxed text-muted" data-reveal>
-    {t(ui.sections.contactLead, lang)}
-  </p>
+<!-- El cierre de la página: contacto y footer son una sola hoja que sube sobre el fondo,
+     con las esquinas de arriba redondeadas. Así el footer no queda como una pieza suelta
+     debajo, sino como el pie de la misma superficie. -->
+<div class="contact-sheet relative isolate mt-24 overflow-hidden rounded-t-[2rem] border-t border-line bg-footer md:mt-32 md:rounded-t-[3rem]">
+  {/* Resplandor ámbar arriba: da calidez sin pintar todo de ámbar. Decorativo. */}
+  <div class="contact-glow pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px]" aria-hidden="true"></div>
 
-  <div data-reveal>
-    <Panel bodyClass="divide-y divide-line">
-      {
-        channels.map((c) => (
-          <LinkRow
-            href={c.href}
-            label={c.name}
-            icon={c.icon}
-            accent={'primary' in c && c.primary}
-            copy={'copy' in c ? c.copy : undefined}
-            copiedLabel={'copy' in c ? t(ui.sections.emailCopied, lang) : undefined}
-          />
-        ))
-      }
-    </Panel>
-  </div>
+  <section id="contacto" class="container-site pt-16 pb-16 md:pt-24 md:pb-24">
+    <div class="grid gap-12 lg:grid-cols-12 lg:gap-16">
+      <div class="lg:col-span-5">
+        <p class="meta mb-4" data-reveal>{t(ui.sections.contactEyebrow, lang)}</p>
+        <RevealText
+          text={t(ui.sections.contactTitle, lang)}
+          as="h2"
+          class="font-display text-4xl leading-[1.05] font-bold tracking-[-0.035em] md:text-6xl"
+        />
+        <p class="mt-6 max-w-[46ch] leading-relaxed text-muted md:text-lg" data-reveal>
+          {t(ui.sections.contactLead, lang)}
+        </p>
 
-  <!-- Firma con guiño al oficio: una línea de estado como la que devuelve un servidor.
-       Todo lo que afirma es verificable (disponibilidad, ciudad, con qué está hecho). -->
-  <footer class="mt-16 overflow-hidden rounded-2xl border border-line bg-footer" data-reveal>
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line px-5 py-3 font-mono text-xs md:px-6">
-      <span class="rounded bg-ok/10 px-1.5 py-0.5 font-semibold text-ok">200</span>
-      <span class="text-ok">OK</span>
-      <span class="text-muted">·</span>
-      <span class="text-text">{t(ui.sections.footerStatus, lang)}</span>
-      <span class="ml-auto flex items-center gap-2 text-muted">
-        <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
-          <span class="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 motion-safe:animate-ping"></span>
-          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-ok"></span>
-        </span>
-        {t(profile.availability, lang)}
-      </span>
+        {/* Lo que un cliente de otro país pregunta antes de escribir: si hay hueco y a
+            qué hora contesta. La hora se calcula en el navegador; sin JS la fila no aparece. */}
+        <ul class="mt-10 flex flex-col gap-4 border-t border-line pt-8 text-sm" data-reveal>
+          <li class="flex items-center gap-3">
+            <span class="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
+              <span class="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 motion-safe:animate-ping"></span>
+              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-ok"></span>
+            </span>
+            <span class="font-medium">{t(profile.availability, lang)}</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="mt-0.5 shrink-0 text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+            </svg>
+            <span class="flex flex-col gap-0.5">
+              <span class="font-medium">
+                {t(ui.sections.localTime, lang)}<span data-local-time hidden class="tabular text-accent-text"></span>
+              </span>
+              <span class="text-muted">{t(heroCard.location.detail, lang)}</span>
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="grid content-start gap-3 sm:grid-cols-2 sm:gap-4 lg:col-span-7" data-reveal-group>
+        {
+          channels.map((c) => (
+            <div data-reveal>
+              <ChannelCard
+                href={c.href}
+                label={c.name}
+                note={c.note}
+                icon={c.icon}
+                featured={'primary' in c && c.primary}
+                copy={'copy' in c ? c.copy : undefined}
+                copiedLabel={'copy' in c ? t(ui.sections.emailCopied, lang) : undefined}
+              />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <footer class="container-site">
+    {/* Firma con guiño al oficio: una línea de estado como la que devuelve un servidor. */}
+    <div class="flex flex-col gap-4 border-t border-line py-6 text-[13px] text-muted md:flex-row md:items-center md:justify-between">
+      <p class="flex items-center gap-2 font-mono text-xs">
+        <span class="rounded bg-ok/10 px-1.5 py-0.5 font-semibold text-ok">200</span>
+        <span class="text-ok">OK</span>
+        <span aria-hidden="true">·</span>
+        <span class="text-text">{t(ui.sections.footerStatus, lang)}</span>
+      </p>
+      <p>© {new Date().getFullYear()} {profile.name}. {t(ui.sections.footerRights, lang)}</p>
+      <div class="flex items-center gap-5">
+        <span>{t(ui.sections.footerBuilt, lang)}</span>
+        <a href="#top" class="group inline-flex items-center gap-1.5 font-medium text-text transition-colors hover:text-accent-text">
+          {t(ui.sections.backToTop, lang)}
+          <span class="transition-transform duration-300 group-hover:-translate-y-0.5" aria-hidden="true">↑</span>
+        </a>
+      </div>
     </div>
 
-    <div class="px-5 py-5 font-mono text-[13px] leading-[1.9] md:px-6">
-      <p><span class="text-muted">"name":</span> <span class="text-text">"{profile.name}"</span>,</p>
-      <p><span class="text-muted">"role":</span> <span class="text-text">"{t(profile.role, lang)}"</span>,</p>
-      <p><span class="text-muted">"location":</span> <span class="text-text">"{t(profile.location, lang)}"</span></p>
-    </div>
-
-    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-4 md:px-6">
-      <span class="meta">
-        Copyright © {new Date().getFullYear()} {profile.name}. {t(ui.sections.footerRights, lang)}
-      </span>
-      <span class="meta">{t(ui.sections.footerBuilt, lang)}</span>
-    </div>
+    {/* El nombre enorme, recortado por el borde inferior: cierra la página como una firma.
+        Es decorativo (el nombre ya está en la barra y en el hero), así que no se anuncia.
+        Sin `data-reveal`: está al final de la página, nunca cruza la línea que dispara
+        los revelados y se quedaría invisible. */}
+    <p class="contact-wordmark -mb-[0.12em] font-display leading-[0.8] font-bold tracking-[-0.055em] whitespace-nowrap select-none" aria-hidden="true">
+      {profile.name}
+    </p>
   </footer>
-</Section>
+</div>
 
 <script>
-  /* El correo no se muestra en la página, así que un `mailto:` solo dejaría sin salida a
-     quien no tenga programa de correo configurado. Al pulsar se copia la dirección Y se
-     abre el programa: quien tenga cliente lo usa, quien no, ya tiene el correo pegado. */
-  document.querySelectorAll<HTMLAnchorElement>('a[data-copy]').forEach((link) => {
-    const badge = link.querySelector<HTMLElement>('[data-copied]');
-    let timer: number | undefined;
+  import { onPage } from '../scripts/page';
+  import '../scripts/spotlight';
 
-    link.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(link.dataset.copy ?? '');
-      } catch {
-        return; // Sin permiso o sin API: el mailto sigue su curso, no se avisa de algo que no pasó.
-      }
-      if (!badge) return;
-      badge.classList.replace('hidden', 'flex');
-      clearTimeout(timer);
-      timer = window.setTimeout(() => badge.classList.replace('flex', 'hidden'), 2500);
+  onPage((signal) => {
+    /* El correo no se muestra en la página, así que un `mailto:` solo dejaría sin salida a
+       quien no tenga programa de correo configurado. Al pulsar se copia la dirección Y se
+       abre el programa: quien tenga cliente lo usa, quien no, ya tiene el correo pegado. */
+    document.querySelectorAll<HTMLAnchorElement>('a[data-copy]').forEach((link) => {
+      const badge = link.querySelector<HTMLElement>('[data-copied]');
+      const note = link.querySelector<HTMLElement>('[data-note]');
+      let timer: number | undefined;
+
+      link.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(link.dataset.copy ?? '');
+        } catch {
+          return; // Sin permiso o sin API: el mailto sigue su curso, no se avisa de algo que no pasó.
+        }
+        if (!badge) return;
+        badge.classList.replace('hidden', 'flex');
+        note?.classList.add('hidden');
+        clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          badge.classList.replace('flex', 'hidden');
+          note?.classList.remove('hidden');
+        }, 2500);
+      });
     });
+
+    // Hora de Bogotá en vivo. Se toma la zona horaria real, no un desfase fijo.
+    const clock = document.querySelector<HTMLElement>('[data-local-time]');
+    if (clock) {
+      const format = new Intl.DateTimeFormat(document.documentElement.lang === 'en' ? 'en-US' : 'es-CO', {
+        timeZone: 'America/Bogota',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+      const tick = () => (clock.textContent = ` · ${format.format(new Date())}`);
+      tick();
+      clock.hidden = false;
+      const interval = window.setInterval(tick, 15_000);
+      signal.addEventListener('abort', () => clearInterval(interval));
+    }
   });
 </script>

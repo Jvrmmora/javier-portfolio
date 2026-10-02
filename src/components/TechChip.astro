@@ -1,7 +1,10 @@
 ---
 // Chip de tecnología: logo + nombre. Si la tecnología no tiene logo real disponible,
-// se muestra solo el nombre con el mismo tamaño de chip, sin hueco ni marca inventada.
+// se muestra solo el nombre con el mismo alto de chip, sin hueco ni marca inventada.
+//  - `sm`: chip compacto en línea (Experiencia).
+//  - `md`: el logo va en su propia loseta, como en las métricas (Stack).
 import Icon from './Icon.astro';
+import { getIcon } from '../lib/icons';
 
 interface Props {
   name: string;
@@ -9,15 +12,36 @@ interface Props {
   size?: 'sm' | 'md';
 }
 const { name, detail, size = 'sm' } = Astro.props;
-const md = size === 'md';
+const hasLogo = getIcon(name) !== null;
 ---
 
-<li
-  class={`inline-flex items-center rounded-md border border-line bg-bg/60 font-mono text-text/90 ${
-    md ? 'gap-2.5 px-3 py-2 text-[13px]' : 'gap-1.5 px-2.5 py-1 text-xs'
-  }`}
->
-  <Icon name={name} size={md ? 18 : 14} />
-  <span>{name}</span>
-  {detail && <span class="text-muted">· {detail}</span>}
-</li>
+{
+  size === 'sm' ? (
+    <li class="inline-flex items-center gap-1.5 rounded-md border border-line bg-bg/60 px-2.5 py-1 font-mono text-xs text-text/90">
+      <Icon name={name} size={14} />
+      <span>{name}</span>
+      {detail && <span class="text-muted">· {detail}</span>}
+    </li>
+  ) : (
+    <li
+      class:list={[
+        'group/chip inline-flex min-h-11 items-center gap-2.5 rounded-xl border border-line bg-bg/70 py-1.5 text-sm font-medium transition-[translate,border-color] duration-200 hover:-translate-y-0.5 hover:border-accent-text/50',
+        hasLogo ? 'pr-3.5 pl-1.5' : 'px-3.5',
+      ]}
+    >
+      {hasLogo && (
+        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface text-text transition-colors duration-200 group-hover/chip:text-accent-text">
+          <Icon name={name} size={18} />
+        </span>
+      )}
+      {detail ? (
+        <span class="flex flex-col leading-tight">
+          <span>{name}</span>
+          <span class="mt-0.5 text-xs font-normal text-muted">{detail}</span>
+        </span>
+      ) : (
+        <span>{name}</span>
+      )}
+    </li>
+  )
+}

@@ -5,6 +5,13 @@ import { experience } from '../data/experience';
 import { langFromUrl, t, ui } from '../i18n/config';
 
 const lang = langFromUrl(Astro.url);
+
+// En el empleo actual, el extremo "Actualidad" / "Present" se resalta en ámbar de marca.
+const splitPeriod = (text: string, current: boolean) => {
+  if (!current) return { from: text, to: '' };
+  const [from, to = ''] = text.split(' — ');
+  return { from, to };
+};
 ---
 
 <Section
@@ -14,65 +21,77 @@ const lang = langFromUrl(Astro.url);
   lead={t(ui.sections.experienceLead, lang)}
 >
   <!-- Línea de tiempo: un <ol> real, el orden importa y así lo entiende un lector de pantalla.
-       La línea es el borde izquierdo de cada entrada, así se ve continua sin un elemento extra. -->
-  <ol class="relative">
-    {
-      experience.map((job, i) => (
-        <li class="grid md:grid-cols-[150px_1fr] md:gap-10" data-reveal>
-          <div class="hidden md:block md:pt-0.5 md:text-right">
-            <p class="font-display tabular text-3xl leading-none font-semibold tracking-[-0.03em]">{job.start}</p>
-            <p class="meta mt-2">{t(job.period, lang)}</p>
-          </div>
-
-          <div
-            class={`relative border-l pl-8 md:pl-10 ${
-              i === experience.length - 1 ? 'border-transparent pb-0' : 'border-line pb-14 md:pb-20'
-            }`}
-          >
-            {/* La última entrada no dibuja línea hacia abajo; este tramo la une con el punto. */}
-            {i === experience.length - 1 && (
-              <span class="absolute top-0 -left-px h-2 w-px bg-line" aria-hidden="true" />
-            )}
-            <span
-              data-dot
-              class={`absolute top-1 -left-[7px] h-3.5 w-3.5 rounded-full border-2 ${
-                job.current ? 'border-ok bg-ok ring-4 ring-ok/20' : 'border-line bg-bg'
-              }`}
-              aria-hidden="true"
-            />
-
-            <p class="meta mb-3 md:hidden">{t(job.period, lang)}</p>
-
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h3 class="font-display text-xl font-semibold tracking-[-0.02em] md:text-2xl">{job.company}</h3>
-              {job.current && (
-                <span class="rounded-full bg-ok/10 px-2.5 py-0.5 text-[11px] font-semibold text-ok">
-                  {t(ui.sections.current, lang)}
-                </span>
-              )}
+       La línea gris es el borde izquierdo de cada entrada, así se ve continua sin un
+       elemento extra. Encima, Motion.astro dibuja con el scroll una línea ámbar con un
+       cabezal luminoso, como la barra de un video, y enciende cada punto al llegar a él.
+       Esas dos piezas solo se muestran cuando el script toma el control (`.tl-live`):
+       sin JS o con movimiento reducido queda la línea estática. -->
+  <div class="relative" data-timeline>
+    <span data-tl-progress class="pointer-events-none absolute -left-px z-[1] w-[3px] origin-top rounded-full bg-accent md:left-[189px]" aria-hidden="true"></span>
+    <span data-tl-head class="pointer-events-none absolute left-0 z-10 h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_0_5px_rgb(245_158_11/0.18),0_0_18px_4px_rgb(245_158_11/0.5)] md:left-[190px]" aria-hidden="true"></span>
+    <ol class="relative">
+      {
+        experience.map((job, i) => {
+          const period = splitPeriod(t(job.period, lang), job.current);
+          return (
+          <li class="grid md:grid-cols-[150px_1fr] md:gap-10" data-reveal>
+            <div class="hidden md:block md:pt-0.5 md:text-right" data-tl-year>
+              <p class="font-display tabular text-3xl leading-none font-semibold tracking-[-0.03em]">{job.start}</p>
+              <p class="meta mt-2">{period.from}{period.to && <> — <span class="font-semibold text-accent-text">{period.to}</span></>}</p>
             </div>
-            <p class="mt-1.5 text-[15px]">
-              {t(job.role, lang)}
-              <span class="text-muted"> · {t(job.place, lang)}</span>
-            </p>
 
-            <ul class="mt-6 flex flex-col gap-3">
-              {job.bullets.map((b) => (
-                <li class="flex gap-3 text-[15px] leading-relaxed text-muted">
-                  <span class="mt-[0.7em] h-px w-3 shrink-0 bg-muted" aria-hidden="true" />
-                  <span>{t(b, lang)}</span>
-                </li>
-              ))}
-            </ul>
+            <div
+              class={`relative border-l pl-8 md:pl-10 ${
+                i === experience.length - 1 ? 'border-transparent pb-0' : 'border-line pb-14 md:pb-20'
+              }`}
+            >
+              {/* La última entrada no dibuja línea hacia abajo; este tramo la une con el punto. */}
+              {i === experience.length - 1 && (
+                <span class="absolute top-0 -left-px h-2 w-px bg-line" aria-hidden="true" />
+              )}
+              <span
+                data-dot
+                data-current={job.current ? '' : undefined}
+                class={`absolute top-1 -left-[7px] h-3.5 w-3.5 rounded-full border-2 ${
+                  job.current ? 'border-ok bg-ok ring-4 ring-ok/20' : 'border-line bg-bg'
+                }`}
+                aria-hidden="true"
+              />
 
-            <ul class="mt-6 flex flex-wrap gap-2" aria-label={t(ui.sections.technologies, lang)}>
-              {job.stack.map((s) => (
-                <TechChip name={s} />
-              ))}
-            </ul>
-          </div>
-        </li>
-      ))
-    }
-  </ol>
+              <p class="meta mb-3 md:hidden">{period.from}{period.to && <> — <span class="font-semibold text-accent-text">{period.to}</span></>}</p>
+
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h3 class="font-display text-xl font-semibold tracking-[-0.02em] md:text-2xl">{job.company}</h3>
+                {job.current && (
+                  <span class="rounded-full bg-ok/10 px-2.5 py-0.5 text-[11px] font-semibold text-ok">
+                    {t(ui.sections.current, lang)}
+                  </span>
+                )}
+              </div>
+              <p class="mt-1.5 text-[15px]">
+                {t(job.role, lang)}
+                <span class="text-muted"> · {t(job.place, lang)}</span>
+              </p>
+
+              <ul class="mt-6 flex max-w-[78ch] flex-col gap-3">
+                {job.bullets.map((b) => (
+                  <li class="flex gap-3 text-[15px] leading-relaxed text-muted">
+                    <span class="mt-[0.7em] h-px w-3 shrink-0 bg-muted" aria-hidden="true" />
+                    <span>{t(b, lang)}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <ul class="mt-6 flex flex-wrap gap-2" aria-label={t(ui.sections.technologies, lang)}>
+                {job.stack.map((s) => (
+                  <TechChip name={s} />
+                ))}
+              </ul>
+            </div>
+          </li>
+          );
+        })
+      }
+    </ol>
+  </div>
 </Section>
