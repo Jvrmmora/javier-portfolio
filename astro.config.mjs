@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://javiermontano.workers.dev',
+  site: 'https://javiermontano.dev',
 
   // Español en la raíz (/) e inglés bajo /en/.
   i18n: {

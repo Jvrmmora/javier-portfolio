@@ -15,7 +15,7 @@ const {
   description = t(profile.tagline, lang),
 } = Astro.props;
 
-const site = Astro.site ?? new URL('https://javiermontano.workers.dev');
+const site = Astro.site ?? new URL('https://javiermontano.dev');
 const canonical = new URL(localizedPath(lang), site);
 ---
 

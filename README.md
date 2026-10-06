@@ -7,7 +7,7 @@ Presenta servicios, proyectos, experiencia y formas de contacto, en **español e
 <img src="docs/hero-escritorio.png" alt="Portada del portafolio en escritorio: nombre, cargo, botones de contacto y retrato con tarjeta de disponibilidad" width="820" />
 </div>
 
-> El sitio está construido y listo para desplegar. Cuando esté en línea, la URL va aquí.
+> **En línea:** https://javiermontano.dev
 
 ## Vista previa
 
