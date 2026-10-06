@@ -107,4 +107,40 @@ export const ui = {
       en: 'Have a backend project, an integration that will not line up, or a migration that scares you? Reach me on whichever channel you prefer.',
     },
   },
+  chat: {
+    open: { es: 'Pregúntale a mi CV', en: 'Ask my CV' },
+    title: { es: 'Pregúntale a mi CV', en: 'Ask my CV' },
+    subtitle: {
+      es: 'Un asistente que responde con lo que dice este portafolio.',
+      en: 'An assistant that answers from what this portfolio says.',
+    },
+    greeting: {
+      es: 'Hola, soy el asistente del portafolio de Javier. Pregúntame por su experiencia, proyectos o stack.',
+      en: 'Hi, I am the assistant on Javier’s portfolio. Ask me about his experience, projects or stack.',
+    },
+    placeholder: { es: 'Escribe tu pregunta…', en: 'Type your question…' },
+    send: { es: 'Enviar', en: 'Send' },
+    close: { es: 'Cerrar el chat', en: 'Close the chat' },
+    thinking: { es: 'Pensando…', en: 'Thinking…' },
+    disclaimer: {
+      es: 'Respuestas generadas con IA a partir de este sitio. Pueden contener errores.',
+      en: 'AI-generated answers based on this site. They may contain mistakes.',
+    },
+    suggestions: {
+      es: ['¿Tiene experiencia con AWS?', '¿Qué proyectos ha construido?', '¿Está disponible para freelance?'],
+      en: ['Does he have AWS experience?', 'What projects has he built?', 'Is he available for freelance?'],
+    },
+    errorBusy: {
+      es: 'Hay muchas preguntas en este momento. Intenta de nuevo en un minuto o escríbele a Javier directo.',
+      en: 'There are a lot of questions right now. Try again in a minute or message Javier directly.',
+    },
+    errorLimit: {
+      es: 'Has hecho varias preguntas seguidas. Espera un momento antes de la siguiente.',
+      en: 'You have asked several questions in a row. Please wait a moment before the next one.',
+    },
+    errorGeneric: {
+      es: 'No pude responder ahora. Puedes escribirle a Javier directo por WhatsApp o correo.',
+      en: 'I could not answer right now. You can message Javier directly on WhatsApp or email.',
+    },
+  },
 } as const;

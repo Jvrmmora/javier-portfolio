@@ -33,3 +33,7 @@ reports/
 
 # Cloudflare Wrangler local state
 .wrangler/
+
+# Secretos locales de Wrangler (GEMINI_API_KEY)
+.dev.vars
+.dev.vars.*

@@ -1,0 +1,264 @@
+---
+// Chat sobre el CV. Un lanzador flotante abre un panel; las respuestas llegan en
+// streaming desde /api/chat (ver src/pages/api/chat.ts). Sin React: son ~100 líneas
+// de DOM y así el sitio no carga una librería para esto.
+//
+// Todo el texto de las respuestas se inserta con `textContent`, nunca como HTML:
+// lo que devuelve el modelo no es de fiar.
+import { langFromUrl, t, ui } from '../i18n/config';
+
+const lang = langFromUrl(Astro.url);
+const c = ui.chat;
+---
+
+<div class="chat" data-chat data-lang={lang}>
+  <button
+    type="button"
+    class="chat-launcher fixed right-4 bottom-4 z-40 inline-flex h-12 items-center gap-2.5 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent shadow-[0_12px_30px_-10px_rgb(0_0_0/0.5)] transition-[translate,filter] duration-200 hover:-translate-y-0.5 hover:brightness-105 sm:right-6 sm:bottom-6"
+    aria-expanded="false"
+    aria-controls="chat-panel"
+    data-chat-open
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.6A8 8 0 1 1 21 12Z" />
+    </svg>
+    <span class="hidden sm:inline">{t(c.open, lang)}</span>
+    <span class="sr-only sm:hidden">{t(c.open, lang)}</span>
+  </button>
+
+  <section
+    id="chat-panel"
+    role="dialog"
+    aria-label={t(c.title, lang)}
+    class="chat-panel fixed right-3 bottom-3 left-3 z-50 flex max-h-[min(78svh,600px)] flex-col overflow-hidden rounded-2xl border border-line bg-bg shadow-[0_24px_60px_-20px_rgb(0_0_0/0.6)] sm:right-6 sm:bottom-6 sm:left-auto sm:w-[400px]"
+    hidden
+    data-chat-panel
+  >
+    <header class="flex items-start gap-3 border-b border-line bg-surface/60 px-4 py-3.5">
+      <div class="min-w-0 flex-1">
+        <h2 class="font-display text-[15px] font-semibold tracking-[-0.01em]">{t(c.title, lang)}</h2>
+        <p class="mt-0.5 text-xs text-muted">{t(c.subtitle, lang)}</p>
+      </div>
+      <button
+        type="button"
+        class="-mt-1 -mr-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface hover:text-text"
+        aria-label={t(c.close, lang)}
+        data-chat-close
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </header>
+
+    <div class="flex min-h-[220px] flex-1 flex-col gap-3 overflow-y-auto px-4 py-4" role="log" aria-live="polite" data-chat-log>
+      <p class="max-w-[88%] rounded-2xl rounded-bl-md border border-line bg-surface px-3.5 py-2.5 text-sm leading-relaxed">
+        {t(c.greeting, lang)}
+      </p>
+    </div>
+
+    <ul class="flex flex-wrap gap-2 px-4 pb-3" data-chat-suggestions>
+      {
+        c.suggestions[lang].map((q) => (
+          <li>
+            <button type="button" class="rounded-full border border-line bg-surface/60 px-3 py-1.5 text-left text-[13px] text-text transition-colors hover:border-accent-text/50 hover:text-accent-text" data-chat-suggestion>
+              {q}
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+
+    <form class="flex items-center gap-2 border-t border-line px-3 py-3" data-chat-form>
+      <label class="sr-only" for="chat-input">{t(c.placeholder, lang)}</label>
+      <input
+        id="chat-input"
+        name="q"
+        type="text"
+        maxlength="400"
+        autocomplete="off"
+        placeholder={t(c.placeholder, lang)}
+        class="h-11 min-w-0 flex-1 rounded-full border border-line bg-surface/50 px-4 text-sm text-text placeholder:text-muted focus:border-accent-text/60 focus:outline-none"
+        data-chat-input
+      />
+      <button
+        type="submit"
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent transition-[filter] hover:brightness-105 disabled:opacity-50"
+        aria-label={t(c.send, lang)}
+        data-chat-send
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </button>
+    </form>
+    <p class="px-4 pb-3 text-[11px] leading-snug text-muted">{t(c.disclaimer, lang)}</p>
+  </section>
+</div>
+
+<style is:global>
+  .chat-panel[hidden] {
+    display: none;
+  }
+  .chat-panel {
+    animation: chat-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes chat-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chat-panel {
+      animation: none;
+    }
+    .chat-launcher {
+      transition: none;
+    }
+  }
+  /* Tres puntos mientras llega el primer texto. */
+  .chat-dots span {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin: 0 1.5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.4;
+    animation: chat-dot 1s infinite;
+  }
+  .chat-dots span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .chat-dots span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  @keyframes chat-dot {
+    50% {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chat-dots span {
+      animation: none;
+      opacity: 0.7;
+    }
+  }
+</style>
+
+<script>
+  import { onPage } from '../scripts/page';
+  import { ui } from '../i18n/config';
+
+  type Turn = { role: 'user' | 'assistant'; text: string };
+
+  onPage((signal) => {
+    const root = document.querySelector<HTMLElement>('[data-chat]');
+    if (!root) return;
+    const lang = root.dataset.lang === 'en' ? 'en' : 'es';
+    const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+
+    const launcher = q<HTMLButtonElement>('[data-chat-open]');
+    const panel = q<HTMLElement>('[data-chat-panel]');
+    const log = q<HTMLElement>('[data-chat-log]');
+    const form = q<HTMLFormElement>('[data-chat-form]');
+    const input = q<HTMLInputElement>('[data-chat-input]');
+    const send = q<HTMLButtonElement>('[data-chat-send]');
+    const suggestions = q<HTMLElement>('[data-chat-suggestions]');
+
+    const history: Turn[] = [];
+    let busy = false;
+    let request: AbortController | null = null;
+
+    const setOpen = (open: boolean) => {
+      panel.hidden = !open;
+      launcher.setAttribute('aria-expanded', String(open));
+      launcher.hidden = open;
+      if (open) input.focus();
+      else launcher.focus();
+    };
+
+    const bubble = (role: Turn['role']) => {
+      const el = document.createElement('p');
+      el.className =
+        role === 'user'
+          ? 'ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-accent px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap text-on-accent'
+          : 'max-w-[88%] rounded-2xl rounded-bl-md border border-line bg-surface px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap';
+      log.append(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    };
+
+    const fail = (el: HTMLElement, key: 'errorBusy' | 'errorLimit' | 'errorGeneric') => {
+      el.textContent = ui.chat[key][lang];
+    };
+
+    async function ask(question: string) {
+      if (busy || !question.trim()) return;
+      busy = true;
+      send.disabled = true;
+      suggestions.hidden = true;
+
+      bubble('user').textContent = question;
+      const answer = bubble('assistant');
+      answer.innerHTML = '<span class="chat-dots text-muted" role="status"><span></span><span></span><span></span><span class="sr-only"></span></span>';
+      answer.querySelector('.sr-only')!.textContent = ui.chat.thinking[lang];
+
+      request = new AbortController();
+      signal.addEventListener('abort', () => request?.abort(), { once: true });
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ message: question, lang, history }),
+          signal: request.signal,
+        });
+
+        if (!res.ok || !res.body) {
+          fail(answer, res.status === 429 ? 'errorLimit' : res.status === 503 ? 'errorBusy' : 'errorGeneric');
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let text = '';
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          text += decoder.decode(value, { stream: true });
+          answer.textContent = text;
+          log.scrollTop = log.scrollHeight;
+        }
+
+        if (!text.trim()) {
+          fail(answer, 'errorGeneric');
+          return;
+        }
+        history.push({ role: 'user', text: question }, { role: 'assistant', text });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') fail(answer, 'errorGeneric');
+      } finally {
+        busy = false;
+        send.disabled = false;
+        input.focus();
+      }
+    }
+
+    launcher.addEventListener('click', () => setOpen(true), { signal });
+    q<HTMLButtonElement>('[data-chat-close]').addEventListener('click', () => setOpen(false), { signal });
+    panel.addEventListener('keydown', (e) => e.key === 'Escape' && setOpen(false), { signal });
+
+    form.addEventListener(
+      'submit',
+      (e) => {
+        e.preventDefault();
+        const value = input.value;
+        input.value = '';
+        ask(value);
+      },
+      { signal },
+    );
+
+    suggestions.querySelectorAll<HTMLButtonElement>('[data-chat-suggestion]').forEach((b) =>
+      b.addEventListener('click', () => ask(b.textContent ?? ''), { signal }),
+    );
+  });
+</script>
