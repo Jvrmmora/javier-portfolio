@@ -17,8 +17,12 @@
   "vars": {
     // Se cambia aquí si Google renombra el modelo, sin tocar el código.
     "GEMINI_MODEL": "gemini-3.8-flash",
-    "GEMINI_EMBED_MODEL": "gemini-embedding-001"
+    "GEMINI_EMBED_MODEL": "gemini-embedding-001",
+    // Respaldo cuando Gemini no puede responder (cupo gratuito agotado o saturación).
+    "FALLBACK_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
   },
+  // Workers AI: 10.000 neuronas gratis al día, sin clave. Al agotarse falla, no cobra.
+  "ai": { "binding": "AI" },
   // Límite por visitante. El código también funciona sin este binding (en desarrollo local).
   "ratelimits": [
     {
