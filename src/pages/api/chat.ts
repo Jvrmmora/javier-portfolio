@@ -27,7 +27,10 @@ type Turn = { role: 'user' | 'assistant'; text: string };
 const MAX_QUESTION = 400;
 const MAX_TURN = 600;
 const MAX_HISTORY = 4;
-const TOP_K = 4;
+const TOP_K = 5;
+// Datos que casi cualquier pregunta necesita (quién es, cifras, cómo empezar): van siempre,
+// aunque la búsqueda por similitud no los traiga.
+const ALWAYS = ['perfil', 'metricas', 'oferta'];
 const API = 'https://generativelanguage.googleapis.com/v1beta';
 
 const json = (body: unknown, status: number) =>
@@ -40,7 +43,8 @@ const SYSTEM = `You are the assistant on Javier Montaño's portfolio website. Vi
 
 Rules:
 - Answer ONLY from the CONTEXT below. It is the complete and only source of truth about Javier.
-- If the answer is not in the CONTEXT, say you do not have that information. Never guess.
+- If the answer is not in the CONTEXT, say you do not have that information. Never guess. But do read the CONTEXT carefully first: if it contains the answer in any wording (years of experience, main language, how the site is built, tools, projects), give it.
+- If a question is ambiguous (for example "how many years does he have of experience"), answer the most likely reading using the CONTEXT instead of refusing. Never state Javier's personal age or private details.
 - Whenever the visitor wants to hire Javier, asks how to start, about price, rates, timelines, availability or anything you cannot answer, invite them first to book the free 30-minute call, giving the booking link exactly as written in the CONTEXT. WhatsApp and email are secondary options.
 - Never invent employers, dates, numbers, prices, rates, salary expectations, skills or availability commitments. For pricing, rates or salary, send the visitor to Javier.
 - Speak about Javier in the third person. Be concise: at most about 120 words. Plain text; short hyphen lists are fine; no headings or bold.
@@ -227,11 +231,13 @@ export const POST: APIRoute = async ({ request }) => {
       .sort((a, b) => b.score - a.score)
       .slice(0, TOP_K);
 
-    // El fragmento de "cómo empezar" (enlace de la agenda) va siempre: preguntas como
-    // "¿cuánto cobra?" no se parecen a él, pero la respuesta correcta es invitar a la llamada.
-    const offer = vectors.chunks.find((c) => c.id === 'oferta');
+    // Preguntas como "¿cuánto cobra?" no se parecen al fragmento de "cómo empezar", pero la
+    // respuesta correcta es invitar a la llamada: por eso ALWAYS lo incluye.
     const picked = top.map(({ c }) => c);
-    if (offer && !picked.includes(offer)) picked.push(offer);
+    for (const id of ALWAYS) {
+      const fixed = vectors.chunks.find((c) => c.id === id);
+      if (fixed && !picked.includes(fixed)) picked.push(fixed);
+    }
     const context = picked.map((c, i) => `[${i + 1}] ${c[lang]}`).join('\n\n');
 
     const system = `${SYSTEM}\n\nCONTEXT:\n${context}`;

@@ -96,6 +96,33 @@ export function buildChunks(): Chunk[] {
     '.',
   );
 
+  // Preguntas frecuentes. Se escriben como respuesta directa porque así es como se
+  // preguntan: "¿cuál es su lenguaje principal?" no se parece al CV, pero sí a esto.
+  // Todo sale de datos que ya existen en el sitio (metrics, experience, skills).
+  const years = metrics[0].count;
+  const startedCareer = experience[experience.length - 1].start;
+  const currentJob = experience[0];
+
+  add('faq-lenguaje', (l) =>
+    l === 'es'
+      ? `¿Cuál es su lenguaje principal? Su stack principal es Node.js con TypeScript: más de ${years} años construyendo APIs con ellos. También trabaja con JavaScript y también ha trabajado con Python y PHP (Laravel).`
+      : `What is his main programming language? His main stack is Node.js with TypeScript: more than ${years} years building APIs with them. He also works with JavaScript and has also worked with Python and PHP (Laravel).`,
+  );
+
+  add('faq-experiencia', (l) =>
+    l === 'es'
+      ? `¿Cuántos años de experiencia tiene? Más de ${years} años con Node.js y TypeScript (desde ${currentJob.period.es.split(' — ')[0]} en ${currentJob.company}). Su trayectoria como desarrollador backend empezó en ${startedCareer}.`
+      : `How many years of experience does he have? More than ${years} years with Node.js and TypeScript (since ${currentJob.period.en.split(' — ')[0]} at ${currentJob.company}). His career as a backend developer started in ${startedCareer}.`,
+  );
+
+  // Cómo está hecho este sitio. Es texto fijo: si cambian la pila o el chat, hay que
+  // actualizarlo aquí y volver a correr `npm run ingest`.
+  add('faq-este-sitio', (l) =>
+    l === 'es'
+      ? 'Cómo está hecho este sitio: lo construyó Javier con Astro y Tailwind CSS, animaciones con GSAP y Lenis, y tipografías Inter y Geist Mono. Es bilingüe (español e inglés) y funciona sobre Cloudflare Workers con un dominio propio (javiermontano.dev). No usa base de datos ni formulario de contacto. Este asistente es un chat con RAG: busca por similitud en el contenido del sitio y responde con Gemini (con Llama en Cloudflare Workers AI como respaldo). El código es público en https://github.com/Jvrmmora/javier-portfolio.'
+      : 'How this site is built: Javier built it with Astro and Tailwind CSS, animations with GSAP and Lenis, and the Inter and Geist Mono typefaces. It is bilingual (Spanish and English) and runs on Cloudflare Workers with its own domain (javiermontano.dev). It has no database and no contact form. This assistant is a RAG chat: it searches the site content by similarity and answers with Gemini (with Llama on Cloudflare Workers AI as a fallback). The code is public at https://github.com/Jvrmmora/javier-portfolio.',
+  );
+
   add('oferta', (l) =>
     l === 'es'
       ? `Cómo empezar a trabajar con Javier: una llamada gratuita de 30 minutos, sin compromiso, que se agenda en ${CAL_URL}. Después envía un resumen de una página con riesgos, orden de trabajo y un estimado de esfuerzo. También se puede escribir por WhatsApp.`
