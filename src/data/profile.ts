@@ -2,8 +2,8 @@
 // deben decir exactamente lo mismo que esto.
 import type { L, Lang } from '../i18n/config';
 
-/** Enlace de reservas de Cal.com. Provisional: al crear la cuenta, se cambia solo aquí. */
-export const CAL_URL = 'https://cal.com/javier/30min';
+/** Enlace de reservas de Cal.com (cuenta de Javier). Es el único lugar donde vive: tras cambiarlo, correr `npm run ingest`. */
+export const CAL_URL = 'https://cal.com/javiermontano/30min';
 
 export const profile = {
   name: 'Javier Montaño',
