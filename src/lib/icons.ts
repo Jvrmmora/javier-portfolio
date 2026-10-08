@@ -66,6 +66,7 @@ const REGISTRY: Record<string, () => IconData> = {
   platzi: () => fromSimple('platzi'),
   udemy: () => fromSimple('udemy'),
   whatsapp: () => fromSimple('whatsapp'),
+  'cal.com': () => fromSimple('caldotcom'),
   gmail: () => fromSimple('gmail'),
   linkedin: () => fromLogos('linkedin-icon'),
   github: () => fromSimple('github'),

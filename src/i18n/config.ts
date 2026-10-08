@@ -39,7 +39,12 @@ export const ui = {
   },
   hero: {
     downloadCv: { es: 'Descargar CV', en: 'Download CV' },
-    whatsapp: { es: 'Hablemos por WhatsApp', en: 'Message me on WhatsApp' },
+    book: { es: 'Agenda una llamada de 30 min', en: 'Book a 30-min call' },
+    bookNote: {
+      es: 'Gratis · cuéntame qué necesitas y te digo cómo lo resolvería',
+      en: 'Free · tell me what you need and I will tell you how I would solve it',
+    },
+    whatsapp: { es: '¿Prefieres escribirme? Hablemos por WhatsApp', en: 'Prefer to write? Message me on WhatsApp' },
     profile: { es: 'Perfil', en: 'Profile' },
     available: { es: 'Disponible', en: 'Available' },
   },
@@ -103,8 +108,55 @@ export const ui = {
     localTime: { es: 'Hora local en Bogotá', en: 'Local time in Bogotá' },
     backToTop: { es: 'Volver arriba', en: 'Back to top' },
     contactLead: {
-      es: '¿Tienes un proyecto backend, una integración que no cuadra o una migración que da miedo? Escríbeme por el canal que prefieras.',
-      en: 'Have a backend project, an integration that will not line up, or a migration that scares you? Reach me on whichever channel you prefer.',
+      es: '¿Tienes un proyecto backend, una integración que no cuadra o una migración que da miedo? Agenda una llamada gratis de 30 minutos o escríbeme por el canal que prefieras.',
+      en: 'Have a backend project, an integration that will not line up, or a migration that scares you? Book a free 30-minute call or reach me on whichever channel you prefer.',
+    },
+    offerEyebrow: { es: 'Cómo empezar', en: 'How to start' },
+    offerTitle: { es: 'Empecemos por una conversación', en: 'Let’s start with a conversation' },
+    offerBody: {
+      es: 'Una llamada de 30 minutos, sin costo ni compromiso. Me cuentas tu caso y, después, te envío un resumen de una página con los riesgos, el orden de trabajo y un estimado de esfuerzo.',
+      en: 'A 30-minute call, free and with no strings attached. You tell me your case and afterwards I send you a one-page summary with the risks, the order of work and an effort estimate.',
+    },
+    offerDeliverables: {
+      es: ['Llamada de 30 min', 'Resumen de una página', 'Riesgos y orden de trabajo', 'Estimado de esfuerzo'],
+      en: ['30-min call', 'One-page summary', 'Risks and order of work', 'Effort estimate'],
+    },
+  },
+  chat: {
+    open: { es: 'Pregúntale a mi IA', en: 'Ask my AI' },
+    title: { es: 'Asistente IA de Javier', en: 'Javier’s AI assistant' },
+    subtitle: {
+      es: 'Responde solo con lo que dice este portafolio.',
+      en: 'Answers only from what this portfolio says.',
+    },
+    greeting: {
+      es: 'Hola, soy el asistente de IA del portafolio de Javier. Pregúntame por su experiencia, proyectos o stack.',
+      en: 'Hi, I am the AI assistant on Javier’s portfolio. Ask me about his experience, projects or stack.',
+    },
+    placeholder: { es: 'Escribe tu pregunta…', en: 'Type your question…' },
+    send: { es: 'Enviar', en: 'Send' },
+    close: { es: 'Cerrar el chat', en: 'Close the chat' },
+    thinking: { es: 'Pensando…', en: 'Thinking…' },
+    disclaimer: {
+      es: 'Respuestas generadas con IA a partir de este sitio. Pueden contener errores.',
+      en: 'AI-generated answers based on this site. They may contain mistakes.',
+    },
+    suggestions: {
+      es: ['¿Tiene experiencia con AWS?', '¿Qué proyectos ha construido?', '¿Cómo empiezo a trabajar con él?'],
+      en: ['Does he have AWS experience?', 'What projects has he built?', 'How do I start working with him?'],
+    },
+    book: { es: 'Agenda una llamada gratis de 30 min', en: 'Book a free 30-min call' },
+    errorBusy: {
+      es: 'Hay muchas preguntas en este momento. Intenta de nuevo en un minuto o escríbele a Javier directo.',
+      en: 'There are a lot of questions right now. Try again in a minute or message Javier directly.',
+    },
+    errorLimit: {
+      es: 'Has hecho varias preguntas seguidas. Espera un momento antes de la siguiente.',
+      en: 'You have asked several questions in a row. Please wait a moment before the next one.',
+    },
+    errorGeneric: {
+      es: 'No pude responder ahora. Puedes escribirle a Javier directo por WhatsApp o correo.',
+      en: 'I could not answer right now. You can message Javier directly on WhatsApp or email.',
     },
   },
 } as const;
