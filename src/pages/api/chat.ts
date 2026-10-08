@@ -55,7 +55,7 @@ const dot = (a: number[], b: number[]) => {
 };
 
 async function embedQuestion(e: Env, key: string, text: string): Promise<number[]> {
-  const res = await fetch(`${API}/models/${e.GEMINI_EMBED_MODEL}:embedContent`, {
+  const res = await fetchGemini(`${API}/models/${e.GEMINI_EMBED_MODEL}:embedContent`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
@@ -68,6 +68,23 @@ async function embedQuestion(e: Env, key: string, text: string): Promise<number[
   if (!res.ok) throw new UpstreamError(res.status);
   const data = (await res.json()) as { embedding: { values: number[] } };
   return normalize(data.embedding.values);
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Gemini devuelve 503 ("alta demanda") con frecuencia en el plan gratuito y es transitorio:
+ * se reintenta con espera creciente antes de rendirse. Esperar no consume CPU del Worker.
+ * El 429 (cupo agotado) no se reintenta: insistir solo empeora el límite.
+ */
+async function fetchGemini(url: string, init: RequestInit, attempts = 4): Promise<Response> {
+  let res!: Response;
+  for (let i = 0; i < attempts; i++) {
+    res = await fetch(url, init);
+    if (res.status !== 503 && res.status !== 500) return res;
+    await sleep(500 * (i + 1));
+  }
+  return res;
 }
 
 class UpstreamError extends Error {
@@ -154,7 +171,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const context = top.map(({ c }, i) => `[${i + 1}] ${c[lang]}`).join('\n\n');
 
-    const upstream = await fetch(
+    const upstream = await fetchGemini(
       `${API}/models/${e.GEMINI_MODEL}:streamGenerateContent?alt=sse`,
       {
         method: 'POST',
@@ -168,7 +185,13 @@ export const POST: APIRoute = async ({ request }) => {
             })),
             { role: 'user', parts: [{ text: message }] },
           ],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 600 },
+          // `low` es el nivel más bajo que admite el modelo: menos espera antes del primer texto.
+          // maxOutputTokens cuenta también los tokens de razonamiento, de ahí el margen.
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 1200,
+            thinkingConfig: { thinkingLevel: 'low' },
+          },
         }),
       },
     );
@@ -182,8 +205,11 @@ export const POST: APIRoute = async ({ request }) => {
       },
     });
   } catch (err) {
-    // 429 de Gemini = se agotó el cupo gratuito (10 req/min). Se avisa distinto de un fallo.
-    if (err instanceof UpstreamError && err.status === 429) return json({ error: 'busy' }, 503);
+    // 429 = se agotó el cupo gratuito; 503 = Google saturado aun tras reintentar.
+    // En ambos casos el visitante debe leer "ocupado, intenta en un momento", no un fallo.
+    if (err instanceof UpstreamError && (err.status === 429 || err.status === 503)) {
+      return json({ error: 'busy' }, 503);
+    }
     return json({ error: 'upstream' }, 502);
   }
 };
