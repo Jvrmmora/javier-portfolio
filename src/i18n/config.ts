@@ -142,9 +142,10 @@ export const ui = {
       en: 'AI-generated answers based on this site. They may contain mistakes.',
     },
     suggestions: {
-      es: ['¿Tiene experiencia con AWS?', '¿Qué proyectos ha construido?', '¿Está disponible para freelance?'],
-      en: ['Does he have AWS experience?', 'What projects has he built?', 'Is he available for freelance?'],
+      es: ['¿Tiene experiencia con AWS?', '¿Qué proyectos ha construido?', '¿Cómo empiezo a trabajar con él?'],
+      en: ['Does he have AWS experience?', 'What projects has he built?', 'How do I start working with him?'],
     },
+    book: { es: 'Agenda una llamada gratis de 30 min', en: 'Book a free 30-min call' },
     errorBusy: {
       es: 'Hay muchas preguntas en este momento. Intenta de nuevo en un minuto o escríbele a Javier directo.',
       en: 'There are a lot of questions right now. Try again in a minute or message Javier directly.',

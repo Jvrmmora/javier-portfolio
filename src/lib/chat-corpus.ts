@@ -5,7 +5,7 @@
 // Solo lo usa scripts/ingest.mjs, en build time. El Worker nunca importa este archivo:
 // recibe los vectores ya calculados (src/data/cv-vectors.json).
 import type { L } from '../i18n/config';
-import { profile, heroCard, metrics, getChannels } from '../data/profile';
+import { profile, heroCard, metrics, getChannels, CAL_URL } from '../data/profile';
 import { services } from '../data/services';
 import { experience } from '../data/experience';
 import { projects } from '../data/projects';
@@ -31,6 +31,7 @@ export function buildChunks(): Chunk[] {
     [
       `${profile.name} — ${profile.role[l]}. ${profile.stack}.`,
       profile.tagline[l],
+      profile.nonTechnical[l],
       `${profile.availability[l]}.`,
       `${heroCard.remote.title[l]}: ${heroCard.remote.detail[l]}.`,
       `${heroCard.location.title[l]} (${heroCard.location.detail[l]}).`,
@@ -93,6 +94,12 @@ export function buildChunks(): Chunk[] {
       .map((c) => `${c.name[l]} — ${c.issuer}${c.year ? ` (${c.year})` : ''}`)
       .join('; ') +
     '.',
+  );
+
+  add('oferta', (l) =>
+    l === 'es'
+      ? `Cómo empezar a trabajar con Javier: una llamada gratuita de 30 minutos, sin compromiso, que se agenda en ${CAL_URL}. Después envía un resumen de una página con riesgos, orden de trabajo y un estimado de esfuerzo. También se puede escribir por WhatsApp.`
+      : `How to start working with Javier: a free 30-minute call, no strings attached, booked at ${CAL_URL}. Afterwards he sends a one-page summary with risks, order of work and an effort estimate. You can also message him on WhatsApp.`,
   );
 
   add('contacto', (l) =>
