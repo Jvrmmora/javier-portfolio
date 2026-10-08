@@ -123,15 +123,15 @@ export const ui = {
     },
   },
   chat: {
-    open: { es: 'Pregúntale a mi CV', en: 'Ask my CV' },
-    title: { es: 'Pregúntale a mi CV', en: 'Ask my CV' },
+    open: { es: 'Pregúntale a mi IA', en: 'Ask my AI' },
+    title: { es: 'Asistente IA de Javier', en: 'Javier’s AI assistant' },
     subtitle: {
-      es: 'Un asistente que responde con lo que dice este portafolio.',
-      en: 'An assistant that answers from what this portfolio says.',
+      es: 'Responde solo con lo que dice este portafolio.',
+      en: 'Answers only from what this portfolio says.',
     },
     greeting: {
-      es: 'Hola, soy el asistente del portafolio de Javier. Pregúntame por su experiencia, proyectos o stack.',
-      en: 'Hi, I am the assistant on Javier’s portfolio. Ask me about his experience, projects or stack.',
+      es: 'Hola, soy el asistente de IA del portafolio de Javier. Pregúntame por su experiencia, proyectos o stack.',
+      en: 'Hi, I am the AI assistant on Javier’s portfolio. Ask me about his experience, projects or stack.',
     },
     placeholder: { es: 'Escribe tu pregunta…', en: 'Type your question…' },
     send: { es: 'Enviar', en: 'Send' },
