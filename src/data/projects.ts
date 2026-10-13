@@ -116,16 +116,4 @@ export const projects: Project[] = [
     stack: ['Node.js', 'TypeScript', 'Clean Architecture', 'VTEX', 'Google Maps'],
     href: null,
   },
-  {
-    name: same('Jamomo Plan'),
-    meta: { es: 'Producto propio', en: 'Own product' },
-    year: same('2024'),
-    body: {
-      es: 'Aplicación de seguimiento de progreso con autenticación, rachas y control diario de avance.',
-      en: 'Progress-tracking app with authentication, streaks and daily progress logging.',
-    },
-    stack: ['Node.js', 'Express', 'MongoDB', 'JWT'],
-    href: null,
-    repo: 'https://github.com/Jvrmmora/jamomoplan',
-  },
 ];
