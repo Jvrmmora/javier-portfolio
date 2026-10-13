@@ -28,6 +28,9 @@ const MAX_QUESTION = 400;
 const MAX_TURN = 600;
 const MAX_HISTORY = 4;
 const TOP_K = 5;
+// Esperas máximas hasta recibir respuesta de Gemini. Pasadas, se sigue sin él.
+const EMBED_TIMEOUT_MS = 4000;
+const GENERATE_TIMEOUT_MS = 9000;
 // Datos que casi cualquier pregunta necesita (quién es, cifras, cómo empezar): van siempre,
 // aunque la búsqueda por similitud no los traiga.
 const ALWAYS = ['perfil', 'metricas', 'oferta'];
@@ -65,16 +68,20 @@ const dot = (a: number[], b: number[]) => {
 };
 
 async function embedQuestion(e: Env, key: string, text: string): Promise<number[]> {
-  const res = await fetchGemini(`${API}/models/${e.GEMINI_EMBED_MODEL}:embedContent`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({
-      model: `models/${e.GEMINI_EMBED_MODEL}`,
-      content: { parts: [{ text }] },
-      taskType: 'RETRIEVAL_QUERY',
-      outputDimensionality: vectors.dims,
-    }),
-  });
+  const res = await fetchGemini(
+    `${API}/models/${e.GEMINI_EMBED_MODEL}:embedContent`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        model: `models/${e.GEMINI_EMBED_MODEL}`,
+        content: { parts: [{ text }] },
+        taskType: 'RETRIEVAL_QUERY',
+        outputDimensionality: vectors.dims,
+      }),
+    },
+    EMBED_TIMEOUT_MS,
+  );
   if (!res.ok) throw new UpstreamError(res.status);
   const data = (await res.json()) as { embedding: { values: number[] } };
   return normalize(data.embedding.values);
@@ -83,18 +90,29 @@ async function embedQuestion(e: Env, key: string, text: string): Promise<number[
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Gemini devuelve 503 ("alta demanda") con frecuencia en el plan gratuito y es transitorio:
- * se reintenta con espera creciente antes de rendirse. Esperar no consume CPU del Worker.
- * El 429 (cupo agotado) no se reintenta: insistir solo empeora el límite.
+ * Llama a Gemini con un tope de espera por intento. Sin él, Google puede dejar la petición
+ * colgada decenas de segundos cuando está saturado (medido: 64 s hasta el primer texto), y
+ * el visitante mira tres puntos mientras el respaldo, que responde en 2 a 7 s, espera sin usarse.
+ * El tope solo cubre hasta recibir las cabeceras: el texto en streaming no se corta después.
+ * Con `attempts` > 1 se reintenta ante 503/500 con una espera corta; el 429 (cupo agotado)
+ * no se reintenta, insistir solo empeora el límite.
  */
-async function fetchGemini(url: string, init: RequestInit, attempts = 4): Promise<Response> {
-  let res!: Response;
+async function fetchGemini(url: string, init: RequestInit, timeoutMs: number, attempts = 1): Promise<Response> {
+  let res: Response | undefined;
   for (let i = 0; i < attempts; i++) {
-    res = await fetch(url, init);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      res = await fetch(url, { ...init, signal: controller.signal });
+    } catch {
+      throw new UpstreamError(504);
+    } finally {
+      clearTimeout(timer);
+    }
     if (res.status !== 503 && res.status !== 500) return res;
-    await sleep(500 * (i + 1));
+    if (i < attempts - 1) await sleep(300);
   }
-  return res;
+  return res!;
 }
 
 class UpstreamError extends Error {
@@ -224,19 +242,24 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     // Con la pregunta suelta a veces no basta ("¿y en qué nube?"): se le suma la última del visitante.
     const lastUser = [...history].reverse().find((t) => t.role === 'user')?.text ?? '';
-    const q = await embedQuestion(e, key, `${lastUser}\n${message}`.trim());
-
-    const top = vectors.chunks
-      .map((c) => ({ c, score: dot(q, c.v) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, TOP_K);
-
-    // Preguntas como "¿cuánto cobra?" no se parecen al fragmento de "cómo empezar", pero la
-    // respuesta correcta es invitar a la llamada: por eso ALWAYS lo incluye.
-    const picked = top.map(({ c }) => c);
-    for (const id of ALWAYS) {
-      const fixed = vectors.chunks.find((c) => c.id === id);
-      if (fixed && !picked.includes(fixed)) picked.push(fixed);
+    let picked: typeof vectors.chunks;
+    try {
+      const q = await embedQuestion(e, key, `${lastUser}\n${message}`.trim());
+      picked = vectors.chunks
+        .map((c) => ({ c, score: dot(q, c.v) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, TOP_K)
+        .map(({ c }) => c);
+      // Preguntas como "¿cuánto cobra?" no se parecen al fragmento de "cómo empezar", pero la
+      // respuesta correcta es invitar a la llamada: por eso ALWAYS lo incluye.
+      for (const id of ALWAYS) {
+        const fixed = vectors.chunks.find((c) => c.id === id);
+        if (fixed && !picked.includes(fixed)) picked.push(fixed);
+      }
+    } catch {
+      // Sin embedding (Google lento o sin cupo) no se pierde la respuesta: el corpus entero
+      // son ~23 fragmentos, cabe sobrado en el contexto y el modelo elige lo que necesita.
+      picked = vectors.chunks;
     }
     const context = picked.map((c, i) => `[${i + 1}] ${c[lang]}`).join('\n\n');
 
@@ -276,12 +299,13 @@ export const POST: APIRoute = async ({ request }) => {
             },
           }),
         },
-        e.AI ? 2 : 4,
+        GENERATE_TIMEOUT_MS,
+        e.AI ? 1 : 3,
       );
       if (!upstream.ok || !upstream.body) throw new UpstreamError(upstream.status);
       return new Response(textStream(upstream), { headers: { ...headers, 'x-chat-engine': 'gemini' } });
     } catch (err) {
-      const recoverable = err instanceof UpstreamError && [429, 500, 503].includes(err.status);
+      const recoverable = err instanceof UpstreamError && [429, 500, 503, 504].includes(err.status);
       if (!recoverable || !e.AI) throw err;
     }
 
@@ -291,7 +315,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (err) {
     // 429 = se agotó el cupo gratuito; 503 = Google saturado aun tras reintentar.
     // En ambos casos el visitante debe leer "ocupado, intenta en un momento", no un fallo.
-    if (err instanceof UpstreamError && (err.status === 429 || err.status === 503)) {
+    if (err instanceof UpstreamError && [429, 503, 504].includes(err.status)) {
       return json({ error: 'busy' }, 503);
     }
     return json({ error: 'upstream' }, 502);
