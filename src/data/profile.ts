@@ -2,6 +2,9 @@
 // deben decir exactamente lo mismo que esto.
 import type { L, Lang } from '../i18n/config';
 
+/** Enlace de reservas de Cal.com (cuenta de Javier). Es el único lugar donde vive: tras cambiarlo, correr `npm run ingest`. */
+export const CAL_URL = 'https://cal.com/javiermontano/30min';
+
 export const profile = {
   name: 'Javier Montaño',
   role: { es: 'Backend & Cloud Engineer', en: 'Backend & Cloud Engineer' } as L,
@@ -12,6 +15,12 @@ export const profile = {
   tagline: {
     es: 'Construyo el backend sobre el que corre tu producto: APIs que escalan, integraciones que no se rompen y migraciones que no detienen el negocio. Y cuando hace falta, lo entrego completo: del API al dashboard, desplegado y andando.',
     en: 'I build the backend your product runs on: APIs that scale, integrations that hold, and migrations that never stop the business. And when it is needed, I deliver all of it: from the API to the dashboard, deployed and running.',
+  } as L,
+  // Para quien no es técnico: no es un servicio de la lista (sin prueba, no va ahí),
+  // es una frase para que el enlace se pueda compartir en una red que no es de tecnología.
+  nonTechnical: {
+    es: '¿Tu negocio no es tecnológico? También automatizo procesos: recordatorios, formularios y conexión entre las herramientas que ya usas.',
+    en: 'Is your business not a tech business? I also automate processes: reminders, forms and connections between the tools you already use.',
   } as L,
   availability: {
     es: 'Disponible para proyectos freelance',
@@ -117,12 +126,19 @@ const MAIL_SUBJECT = {
 export const getChannels = (lang: Lang) =>
   [
     {
+      name: 'Cal.com',
+      icon: 'cal.com',
+      handle: CAL_URL,
+      href: CAL_URL,
+      note: lang === 'es' ? 'Llamada gratis de 30 min' : 'Free 30-min call',
+      primary: true,
+    },
+    {
       name: 'WhatsApp',
       icon: 'whatsapp',
       handle: profile.phone,
       href: `https://wa.me/573057046717?text=${WHATSAPP_TEXT[lang]}`,
       note: lang === 'es' ? 'Escríbeme directo al chat' : 'Message me directly',
-      primary: true,
     },
     {
       name: lang === 'es' ? 'Correo' : 'Email',

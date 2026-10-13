@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import { profile, heroCard, getChannels, cvHref } from '../data/profile';
+import { profile, heroCard, getChannels, cvHref, CAL_URL } from '../data/profile';
 import { langFromUrl, t, ui } from '../i18n/config';
 import portrait from '../assets/javier.jpg';
 import RevealText from './RevealText.astro';
@@ -8,7 +8,7 @@ import Icon from './Icon.astro';
 
 const lang = langFromUrl(Astro.url);
 const channels = getChannels(lang);
-const whatsapp = channels.find((c) => 'primary' in c && c.primary)!;
+const whatsapp = channels.find((c) => c.icon === 'whatsapp')!;
 // Perfiles que un reclutador abre de inmediato: van como botones de icono junto al CV.
 const profiles = channels.filter((c) => c.icon === 'linkedin' || c.icon === 'github');
 ---
@@ -43,14 +43,18 @@ const profiles = channels.filter((c) => c.icon === 'linkedin' || c.icon === 'git
         {t(profile.tagline, lang)}
       </p>
 
+      <p class="mt-4 max-w-[50ch] text-[15px] leading-relaxed text-muted 2xl:max-w-[54ch]" data-hero-step>
+        {t(profile.nonTechnical, lang)}
+      </p>
+
       <div class="mt-10 flex flex-wrap items-center gap-3 sm:gap-4" data-hero-step>
         <a
-          href={whatsapp.href}
+          href={CAL_URL}
           target="_blank"
           rel="noopener noreferrer"
           class="w-full rounded-lg bg-accent px-6 py-3.5 text-center text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 sm:w-auto"
         >
-          {t(ui.hero.whatsapp, lang)}
+          {t(ui.hero.book, lang)}
         </a>
         <!-- `download` con nombre propio: el archivo llega como "CV Javier Montaño (EN).pdf",
              no como una ruta suelta, y en el idioma que el visitante está leyendo. -->
@@ -80,6 +84,13 @@ const profiles = channels.filter((c) => c.icon === 'linkedin' || c.icon === 'git
           </a>
         ))}
       </div>
+
+      <p class="mt-4 max-w-[50ch] text-[13px] leading-snug text-muted" data-hero-step>
+        {t(ui.hero.bookNote, lang)}&nbsp;·{' '}
+        <a href={whatsapp.href} target="_blank" rel="noopener noreferrer" class="underline decoration-line underline-offset-4 transition-colors hover:text-accent-text hover:decoration-accent-text">
+          {t(ui.hero.whatsapp, lang)}
+        </a>
+      </p>
     </div>
 
     <!-- Dos columnas iguales y la foto al inicio de la suya: así el hueco entre texto y
