@@ -22,7 +22,6 @@ const links = [
   >
     <a
       href={`${localizedPath(lang)}#top`}
-      aria-label={t(ui.a11y.home, lang)}
       class="flex items-center gap-3 rounded-full py-1 pr-1 pl-1 transition-colors hover:bg-surface lg:pr-4"
     >
       {/* Sello de marca: cuadrado ámbar con las iniciales en navy, igual que el favicon.
@@ -33,6 +32,8 @@ const links = [
       >
         JM
       </span>
+      {/* Nombre accesible: bajo 1024px el nombre visible está oculto, así que se da aquí; desde 1024px lo da el texto visible. */}
+      <span class="sr-only lg:hidden">{t(ui.a11y.home, lang)}</span>
       {/* Nombre y cargo apilados, desde 1024px: por debajo, con los enlaces visibles, no caben. */}
       <span class="hidden flex-col leading-tight whitespace-nowrap lg:flex">
         <span class="text-[15px] font-semibold tracking-[-0.01em]">{profile.name}</span>

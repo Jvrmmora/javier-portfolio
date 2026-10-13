@@ -118,21 +118,21 @@ const profiles = channels.filter((c) => c.icon === 'linkedin' || c.icon === 'git
       <div
         class="relative mx-4 -mt-24 rounded-2xl border border-line bg-surface/95 p-5 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.35)] backdrop-blur-md sm:mx-6 lg:absolute lg:bottom-6 lg:-left-8 lg:mx-0 lg:mt-0 lg:w-[320px]"
       >
-        <dl class="flex flex-col divide-y divide-line">
+        <ul class="flex flex-col divide-y divide-line">
           {
             Object.values(heroCard).map((item) => (
-              <div class="flex gap-3.5 py-3.5 first:pt-0 last:pb-0">
+              <li class="flex gap-3.5 py-3.5 first:pt-0 last:pb-0">
                 <svg class="mt-0.5 shrink-0 text-muted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d={item.icon} />
                 </svg>
                 <div>
-                  <dt class="text-[15px] font-semibold leading-snug">{t(item.title, lang)}</dt>
-                  <dd class="mt-0.5 text-[13px] leading-snug text-muted">{t(item.detail, lang)}</dd>
+                  <p class="text-[15px] font-semibold leading-snug">{t(item.title, lang)}</p>
+                  <p class="mt-0.5 text-[13px] leading-snug text-muted">{t(item.detail, lang)}</p>
                 </div>
-              </div>
+              </li>
             ))
           }
-        </dl>
+        </ul>
       </div>
     </aside>
   </div>

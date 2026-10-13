@@ -1,7 +1,7 @@
 ---
 // Revelado por palabras: cada una sube desde detrás de una máscara. El texto completo
 // se parte aquí, en el servidor, no mutando el DOM en el navegador: así el buscador y
-// los lectores de pantalla ven una frase normal (`aria-label`) y nunca letras sueltas.
+// los lectores de pantalla leen una copia `sr-only` de la frase y nunca letras sueltas.
 interface Props {
   text: string;
   as?: 'h1' | 'h2' | 'h3' | 'p' | 'span';
@@ -18,11 +18,11 @@ const words = text.split(' ');
 
 <Tag
   class={extra}
-  aria-label={text}
   data-reveal-text
   data-immediate={immediate ? '' : undefined}
   style={delay ? `--reveal-delay: ${delay}s` : undefined}
 >
+  <span class="sr-only">{text}</span>
   {
     words.map((word, i) => (
       <span class="inline-flex overflow-hidden align-bottom" aria-hidden="true">

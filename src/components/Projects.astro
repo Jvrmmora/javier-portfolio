@@ -349,8 +349,9 @@ const rest = projects.filter((p) => !p.featured);
         for (const node of originals) {
           const copy = node.cloneNode(true) as HTMLElement;
           copy.dataset.clone = '';
+          // `inert` saca la copia del orden de tabulación y del árbol de accesibilidad, incluido el propio <a>.
+          copy.inert = true;
           copy.setAttribute('aria-hidden', 'true');
-          copy.querySelectorAll('a, button').forEach((el) => el.setAttribute('tabindex', '-1'));
           track.append(copy);
         }
         const last = originals[originals.length - 1];
