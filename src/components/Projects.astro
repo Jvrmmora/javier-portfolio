@@ -121,7 +121,7 @@ const rest = projects.filter((p) => !p.featured);
   <div class="container-site pt-14 md:pt-20">
     <div class="flex items-end justify-between gap-6" data-reveal>
       <div>
-        <p class="meta">
+        <p class="meta" data-carousel-ui>
           {/* Las flechas solo existen en escritorio: la pista no puede invitar a usarlas en móvil. */}
           <span class="md:hidden">{t(ui.sections.scrollHint, lang)}</span>
           <span class="hidden md:inline">{t(ui.sections.scrollHintDesktop, lang)}</span>
@@ -135,6 +135,7 @@ const rest = projects.filter((p) => !p.featured);
         <button
           type="button"
           data-track-toggle
+          data-carousel-ui
           aria-label={t(ui.sections.pause, lang)}
           data-label-pause={t(ui.sections.pause, lang)}
           data-label-play={t(ui.sections.play, lang)}
@@ -156,10 +157,12 @@ const rest = projects.filter((p) => !p.featured);
     <!-- Flechas flotando sobre la pista, alineadas con el margen del contenido.
          Solo en escritorio: en móvil el gesto natural es deslizar con el dedo. -->
     <span
+      data-carousel-ui
       class="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-24 bg-gradient-to-r from-bg to-transparent md:block"
       aria-hidden="true"
     ></span>
     <span
+      data-carousel-ui
       class="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-24 bg-gradient-to-l from-bg to-transparent md:block"
       aria-hidden="true"
     ></span>
@@ -167,6 +170,7 @@ const rest = projects.filter((p) => !p.featured);
     <button
       type="button"
       data-track-prev
+      data-carousel-ui
       aria-label={t(ui.sections.prev, lang)}
       class="absolute top-1/2 left-3 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface/90 text-text shadow-[0_8px_30px_-8px_rgb(0_0_0/0.35)] backdrop-blur-md transition hover:scale-105 hover:border-accent-text hover:text-accent-text md:flex"
     >
@@ -175,6 +179,7 @@ const rest = projects.filter((p) => !p.featured);
     <button
       type="button"
       data-track-next
+      data-carousel-ui
       aria-label={t(ui.sections.next, lang)}
       class="absolute top-1/2 right-3 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface/90 text-text shadow-[0_8px_30px_-8px_rgb(0_0_0/0.35)] backdrop-blur-md transition hover:scale-105 hover:border-accent-text hover:text-accent-text md:flex"
     >
@@ -328,9 +333,19 @@ const rest = projects.filter((p) => !p.featured);
       const originals = [...track.children] as HTMLElement[];
       let loopWidth = 0;
 
+      // Si todas las tarjetas caben en la pantalla no hay nada que recorrer: ni copias, ni
+      // movimiento, ni flechas. El carrusel aparece solo cuando hay más proyectos de los que caben.
+      const allFit = () => {
+        const style = getComputedStyle(track);
+        const room = track.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const lastCard = originals[originals.length - 1];
+        return lastCard.offsetLeft + lastCard.offsetWidth - originals[0].offsetLeft <= room + 1;
+      };
+
       const buildClones = () => {
         track.querySelectorAll('[data-clone]').forEach((el) => el.remove());
-        if (calm.matches) return;
+        loopWidth = 0;
+        if (calm.matches || allFit()) return;
         for (const node of originals) {
           const copy = node.cloneNode(true) as HTMLElement;
           copy.dataset.clone = '';
@@ -444,6 +459,11 @@ const rest = projects.filter((p) => !p.featured);
         stop();
         track.scrollLeft = 0;
         buildClones();
+        const still = allFit();
+        // `style.display` y no `hidden`: las flechas ya llevan `md:flex`, que gana a ese atributo.
+        document.querySelectorAll<HTMLElement>('[data-carousel-ui]').forEach((el) => {
+          el.style.display = still ? 'none' : '';
+        });
         toggle?.classList.toggle('hidden', calm.matches);
         paint();
         start();
