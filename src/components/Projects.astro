@@ -4,11 +4,10 @@ import Section from './Section.astro';
 import Panel from './Panel.astro';
 import Icon from './Icon.astro';
 import { projects } from '../data/projects';
-import { getChannels } from '../data/profile';
+import { CAL_URL } from '../data/profile';
 import { langFromUrl, t, ui } from '../i18n/config';
 
 const lang = langFromUrl(Astro.url);
-const whatsapp = getChannels(lang).find((c) => 'primary' in c && c.primary)!;
 
 const featuredList = projects.filter((p) => p.featured);
 const rest = projects.filter((p) => !p.featured);
@@ -237,23 +236,25 @@ const rest = projects.filter((p) => !p.featured);
     }
 
     <a
-      href={whatsapp.href}
+      href={CAL_URL}
       target="_blank"
       rel="noopener noreferrer"
-      class="cta-pulse group flex w-[82vw] shrink-0 flex-col justify-between rounded-xl border border-dashed p-6 transition-colors hover:bg-surface/40 sm:w-[58vw] lg:w-[352px]"
+      class="cta-pulse group flex w-[82vw] shrink-0 flex-col justify-between rounded-xl border border-dashed p-6 transition-colors sm:w-[58vw] lg:w-[352px]"
     >
       <div>
         <p class="meta mb-4">{t(ui.sections.yourProject, lang)}</p>
-        <h3 class="font-display text-lg leading-snug font-semibold tracking-[-0.02em]">
+        <h3 class="font-display text-2xl leading-tight font-semibold tracking-[-0.03em] text-accent-text">
           {t(ui.sections.yoursNext, lang)}
         </h3>
         <p class="mt-4 text-[15px] leading-relaxed text-muted">
           {t(ui.sections.yoursNextBody, lang)}
         </p>
       </div>
-      <span class="mt-5 inline-flex items-center gap-2 text-xs text-accent-text">
-        {t(ui.sections.letsTalk, lang)}
-        <span class="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true">↗</span>
+      <!-- Botón relleno: es la única acción de la tarjeta y debe leerse como tal. La tinta
+           navy sobre ámbar da 8:1 en los dos modos. -->
+      <span class="mt-6 inline-flex w-fit items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition-[filter,translate] group-hover:-translate-y-0.5 group-hover:brightness-105">
+        {t(ui.hero.book, lang)}
+        <span aria-hidden="true">↗</span>
       </span>
     </a>
   </div>
@@ -266,10 +267,13 @@ const rest = projects.filter((p) => !p.featured);
      así que se distingue del resto sin gritar. */
   .cta-pulse {
     border-color: color-mix(in oklab, var(--color-accent) 60%, transparent);
+    /* Un velo ámbar muy leve: la tarjeta se distingue sin perder contraste del texto. */
+    background: color-mix(in oklab, var(--color-accent) 6%, transparent);
   }
 
   .cta-pulse:hover {
     border-color: var(--color-accent);
+    background: color-mix(in oklab, var(--color-accent) 10%, transparent);
   }
 
   @media (prefers-reduced-motion: no-preference) {
