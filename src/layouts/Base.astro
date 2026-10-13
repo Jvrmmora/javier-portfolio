@@ -120,7 +120,10 @@ const ogImage = new URL('/og-image.png', site);
       type Spot = { id: string; ratio: number };
       let spot: Spot | null = null;
 
-      const anchors = () => [...document.querySelectorAll<HTMLElement>('header#top, section[id]')];
+      // Solo el contenido de la página: el panel del chat también es un `section[id]`, pero está
+      // fuera de <main>, flota y oculto mide 0 de alto en la posición 0. Si contara, siempre
+      // sería "la última sección ya pasada" y cada cambio de idioma volvería al principio.
+      const anchors = () => [...document.querySelectorAll<HTMLElement>('header#top, main section[id]')];
 
       document.addEventListener('astro:before-preparation', (event) => {
         spot = null;
